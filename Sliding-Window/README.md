@@ -24,3 +24,15 @@ Space Complexity: O(1)
 ### Complexity
 - Time: O(n)
 - Space: O(1)
+
+## 3. Maximum Points You Can Obtain from Cards
+
+### Approach
+- Convert problem into finding minimum subarray of size (n - k)
+- Calculate total sum of array
+- Use sliding window to find minimum sum
+- Subtract min sum from total sum
+
+### Complexity
+- Time: O(n)
+- Space: O(1)
