@@ -75,3 +75,31 @@ Given an array of positive integers `nums` and a target value `target`, find the
 ### Complexity
 - Time: O(n)
 - Space: O(1)
+
+
+## 5. Max Consecutive Ones III
+
+### Problem
+Given a binary array `nums` and an integer `k`, return the maximum number of consecutive 1's in the array if you can flip at most `k` zeros.
+
+---
+
+### Approach
+- Use sliding window technique
+- Expand window using right pointer
+- Count zeros in current window
+- If zeros exceed k:
+  - Shrink window from left
+- Maintain maximum length of valid window
+
+---
+
+### Key Idea
+- At most k zeros allowed in window
+- Window should always satisfy zeros <= k
+
+---
+
+### Complexity
+- Time: O(n)
+- Space: O(1)
