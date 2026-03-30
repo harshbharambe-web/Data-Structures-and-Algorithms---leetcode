@@ -36,3 +36,42 @@ Space Complexity: O(1)
 ### Complexity
 - Time: O(n)
 - Space: O(1)
+
+- Minimum Size Subarray Sum
+Approach
+Use Sliding Window
+Expand window using right
+Add elements to sum
+When sum ≥ target, shrink window from left
+Update minimum length while shrinking
+Complexity
+Time: O(n)
+Space: O(1)
+
+
+## 4. Minimum Size Subarray Sum
+
+### Problem
+Given an array of positive integers `nums` and a target value `target`, find the minimal length of a contiguous subarray whose sum is greater than or equal to target. If no such subarray exists, return 0.
+
+---
+
+### Approach
+- Use variable size sliding window
+- Expand window by adding elements using right pointer
+- When sum becomes >= target:
+  - Update minimum length
+  - Shrink window from left
+- Continue until entire array is processed
+
+---
+
+### Key Idea
+- Maintain a window where sum >= target
+- Try to minimize the window size while maintaining the condition
+
+---
+
+### Complexity
+- Time: O(n)
+- Space: O(1)
