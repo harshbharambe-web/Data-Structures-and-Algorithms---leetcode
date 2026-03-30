@@ -103,3 +103,32 @@ Given a binary array `nums` and an integer `k`, return the maximum number of con
 ### Complexity
 - Time: O(n)
 - Space: O(1)
+
+
+## 6. Fruit Into Baskets
+
+### Problem
+You are given an array `fruits` where each element represents a type of fruit. You can collect fruits in two baskets, each basket can only hold one type of fruit. Return the maximum number of fruits you can collect.
+
+---
+
+### Approach
+- Use sliding window with HashMap
+- Store frequency of fruits in the current window
+- Expand window using right pointer
+- If number of fruit types exceeds 2:
+  - Shrink window from left
+  - Remove fruit when count becomes 0
+- Track maximum window size
+
+---
+
+### Key Idea
+- At most 2 distinct elements allowed in window
+- Maintain valid window using HashMap
+
+---
+
+### Complexity
+- Time: O(n)
+- Space: O(1)
