@@ -61,3 +61,34 @@ The first `k` elements of the array should contain the final result. ([LeetCode]
 
 ---
 
+## 3. Concatenation of Array
+
+## 📌 Problem
+
+Given an array `nums` of size `n`, return a new array of size `2n` where the second half is a duplicate of the first half. ([Prakash's Web Page][1])
+
+---
+
+## 💡 Approach
+
+* Create a new array of size `2n`
+* Copy elements of `nums` twice
+* First half → original array
+* Second half → same array again
+
+---
+
+## ⏱ Complexity
+
+* **Time:** O(n) ([WalkCCC][2])
+* **Space:** O(n)
+
+---
+
+## 🎯 Pattern
+
+👉 Array Traversal / Simulation
+
+---
+
+
