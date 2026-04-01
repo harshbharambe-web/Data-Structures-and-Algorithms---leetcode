@@ -85,6 +85,21 @@ Given an array `nums` of size `n`, return a new array of size `2n` where the sec
 
 ---
 
+## 4. Longest Common Prefix (LeetCode 14)
+🧩 Problem
+
+Find the longest common prefix among an array of strings.
+If no common prefix exists, return an empty string "".
+
+💡 Approach
+Take the first string as reference
+Compare characters with all other strings
+Stop when mismatch or string ends
+Return prefix till that point
+⚙️ Complexity
+Time: O(n × m)
+Space: O(1)
+
 ## 🎯 Pattern
 
 👉 Array Traversal / Simulation
