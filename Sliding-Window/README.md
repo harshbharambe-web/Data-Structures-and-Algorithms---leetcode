@@ -132,3 +132,77 @@ You are given an array `fruits` where each element represents a type of fruit. Y
 ### Complexity
 - Time: O(n)
 - Space: O(1)
+
+- ---
+
+## 7. Maximum substring with atmost k char
+
+### 📌 Overview
+
+The Sliding Window technique is used to efficiently process **contiguous subarrays or substrings** by maintaining a dynamic window range instead of recalculating values repeatedly.
+
+---
+
+### ⚡ Use Cases
+
+* Longest / shortest substring problems
+* Maximum / minimum sum subarrays
+* Problems with constraints like:
+
+  * At most K distinct elements
+  * Exactly K distinct elements
+  * Fixed window size
+
+---
+
+### 🧠 Concept
+
+* Maintain a window using two pointers:
+
+  * `Left (l)` → start
+  * `Right (r)` → end
+* Expand the window by moving `r`
+* Shrink the window by moving `l` when constraints are violated
+
+---
+
+### 🔄 Workflow
+
+* Add element at `r` into the window
+* Check if condition is satisfied
+* If violated → shrink window from `l`
+* If valid → update result
+* Continue until full traversal
+
+---
+
+### 🎯 Types of Sliding Window
+
+* Fixed Size Window
+* Variable Size Window
+
+---
+
+### 🚀 Complexity
+
+* Time Complexity: **O(n)**
+* Space Complexity: **O(1)** or **O(k)** (depending on data structure)
+
+---
+
+### 💡 Key Insight
+
+👉 Efficiently reuse previous computations by adjusting the window instead of recomputing from scratch
+
+---
+
+### 🏁 Summary
+
+👉 “Expand the window to include elements, shrink it when constraints break, and track the best result.”
+
+---
+
+### 🏷️ Tags
+
+#SlidingWindow #TwoPointers #DSA #Algorithms #InterviewPrep #LeetCode #Coding
+
