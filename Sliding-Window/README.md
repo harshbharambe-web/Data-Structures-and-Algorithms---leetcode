@@ -206,3 +206,92 @@ The Sliding Window technique is used to efficiently process **contiguous subarra
 
 #SlidingWindow #TwoPointers #DSA #Algorithms #InterviewPrep #LeetCode #Coding
 
+---
+
+## 8. Number of Substrings Containing All Three Characters
+
+## 🧠 Problem
+
+Given a string `s` consisting only of characters `a`, `b`, and `c`, return the number of substrings that contain **at least one occurrence of all three characters**.
+
+---
+
+## 🚀 Approach: Sliding Window + HashMap
+
+We use a **sliding window technique** along with a **HashMap** to track the frequency of characters inside the current window.
+
+---
+
+## ⚙️ Algorithm
+
+1. Initialize:
+
+   * `left = 0`
+   * `count = 0`
+   * `HashMap<Character, Integer> map`
+
+2. Expand the window using `right` pointer:
+
+   * Add current character into the map
+
+3. When the window contains all 3 characters (`map.size() == 3`):
+
+   * Add `(n - right)` to count
+     👉 Because all substrings from current window to end are valid
+
+4. Shrink the window:
+
+   * Remove `left` character from map
+   * If frequency becomes 0 → remove it from map
+   * Move `left++`
+
+5. Repeat until end of string
+
+---
+
+## 🔑 Key Insight
+
+When the window becomes valid (contains `a`, `b`, `c`),
+we can directly count multiple substrings at once:
+
+Number of valid substrings = `n - right`
+
+---
+
+## 📊 Complexity
+
+* **Time Complexity:** `O(n)`
+* **Space Complexity:** `O(1)` (at most 3 characters in map)
+
+---
+
+## 🧩 Example
+
+Input:
+
+```
+s = "abcabc"
+```
+
+Output:
+
+```
+10
+```
+
+---
+
+## 🎯 Summary
+
+* Use sliding window to efficiently scan substrings
+* Use HashMap to track character frequencies
+* Count multiple substrings in one step using `(n - right)`
+* Avoid brute force (`O(n²)`)
+
+---
+
+## 🏷️ Tags
+
+`#SlidingWindow` `#HashMap` `#TwoPointers` `#LeetCode` `#Strings`
+
+
