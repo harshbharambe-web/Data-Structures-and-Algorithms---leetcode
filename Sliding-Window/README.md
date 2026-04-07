@@ -294,4 +294,47 @@ Output:
 
 `#SlidingWindow` `#HashMap` `#TwoPointers` `#LeetCode` `#Strings`
 
+--- 
+## 9. Longest Repeating Character Replacement (LeetCode 424)
+
+## 🧠 Problem
+
+Given a string `s` (uppercase letters) and an integer `k`, you can replace at most `k` characters.
+Find the length of the longest substring where all characters are the same.
+
+---
+
+## 💡 Approach (Sliding Window)
+
+* Use two pointers (`l`, `r`) to maintain a window
+* Use a frequency array (`hash[26]`) to count characters
+* Track the most frequent character (`maxFreq`)
+* If `(window size - maxFreq) > k`, shrink the window
+* Update the maximum length
+
+---
+
+## ⏱ Complexity
+
+* Time: **O(n)**
+* Space: **O(26)** ≈ O(1)
+
+---
+
+## 🚀 Key Idea
+
+```
+window size - max frequency ≤ k
+```
+
+---
+
+## 📌 Example
+
+```
+Input: s = "AABABBA", k = 1
+Output: 4
+```
+
+
 
