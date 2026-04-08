@@ -335,6 +335,37 @@ window size - max frequency ≤ k
 Input: s = "AABABBA", k = 1
 Output: 4
 ```
+---
 
+## 10. Binary Subarrays With Sum
+🧠 Problem
+
+Given a binary array nums (only 0s and 1s) and an integer goal, return the number of non-empty subarrays whose sum equals goal.
+
+## 🚀 Approach (Sliding Window Trick)
+
+Directly counting subarrays with exact sum = goal is difficult using sliding window.
+
+👉 So we use:
+
+exact(goal) = atMost(goal) - atMost(goal - 1)
+atMost(goal) → counts subarrays with sum ≤ goal
+atMost(goal - 1) → removes extra cases
+Final result → gives exact sum = goal
+
+## 💡 Key Idea
+
+At every index r, number of valid subarrays ending at r is:
+
+r - l + 1
+
+Because all subarrays from index l to r are valid.
+
+## ⚡ Complexity
+Time: O(n)
+Space: O(1)
+## 🔥 Key Takeaway
+Sliding window works easily for ≤ goal
+Convert exact goal → using subtraction trick
 
 
