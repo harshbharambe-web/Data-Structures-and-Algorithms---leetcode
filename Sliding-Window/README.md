@@ -368,4 +368,53 @@ Space: O(1)
 Sliding window works easily for ≤ goal
 Convert exact goal → using subtraction trick
 
+---
+## 11. Count Number of Nice Subarrays
+
+## 🧩 Problem
+
+Given an integer array nums and an integer k, find the number of contiguous subarrays that contain exactly k odd numbers.
+
+A subarray is called nice if it has exactly k odd elements.
+
+## 💡 Approach
+
+Instead of directly counting subarrays with exactly k odd numbers, we use a trick:
+
+exactly(k) = atMost(k) − atMost(k − 1)
+
+atMost(k) → counts subarrays with at most k odd numbers
+Subtracting removes extra cases and leaves only exactly k
+
+## ⚙️ Algorithm (Sliding Window)
+Use two pointers: left and right
+Expand the window using right
+Keep track of number of odd elements in the current window
+If odd count exceeds k, shrink window from left
+For each position, add the number of valid subarrays ending at that index
+
+👉 Number of subarrays ending at index right:
+(right − left + 1)
+
+## 🧠 Intuition
+Convert problem into counting subarrays with constraints
+Sliding window works because condition is monotonic (≤ k)
+The "exactly k" condition is solved using subtraction trick
+
+
+## ⏱️ Complexity
+
+| Type  | Complexity |
+| ----- | ---------- |
+| Time  | O(n)       |
+| Space | O(1)       |
+
+
+## 🔥 Key Takeaways
+Use Sliding Window for subarray problems
+Remember the trick:
+👉 exactly(k) = atMost(k) − atMost(k−1)
+(r - l + 1) is the core counting formula
+Very common pattern in coding interviews
+
 
