@@ -417,4 +417,72 @@ Remember the trick:
 (r - l + 1) is the core counting formula
 Very common pattern in coding interviews
 
+---
+## 11. Subarrays with K Different Integers
+
+## 🚀 Problem
+
+Given an integer array `nums` and an integer `k`, return the number of subarrays that contain **exactly `k` distinct integers**.
+
+---
+
+## 💡 Approach
+
+We cannot directly count subarrays with exactly `k` distinct elements efficiently.
+
+👉 Use the trick:
+
+```
+Exactly K = AtMost(K) - AtMost(K-1)
+```
+
+* `AtMost(K)` → subarrays with at most `k` distinct elements
+* `AtMost(K-1)` → subarrays with at most `k-1` distinct elements
+
+Subtracting gives subarrays with **exactly `k` distinct elements** ([AlgoMonster][1])
+
+---
+
+## ⚙️ Algorithm
+
+* Use **Sliding Window + HashMap**
+* Expand window using right pointer
+* Shrink window when distinct elements exceed `k`
+* Count valid subarrays using:
+
+```
+count += (right - left + 1)
+```
+
+---
+
+## ⏱️ Complexity
+
+* Time: **O(n)**
+* Space: **O(k)**
+
+---
+
+## 📊 Example
+
+```
+Input: nums = [1,2,1,2,3], k = 2
+Output: 7
+```
+
+---
+
+## 🧠 Key Insight
+
+> Convert “exactly K” into “at most K” problems — a common sliding window pattern.
+
+---
+
+## 🔥 Tags
+
+`Sliding Window` `HashMap` `Two Pointers` `Hard`
+
+[1]: https://algo.monster/liteproblems/992?utm_source=chatgpt.com "992. Subarrays with K Different Integers - In-Depth Explanation"
+
+
 
