@@ -439,7 +439,7 @@ Exactly K = AtMost(K) - AtMost(K-1)
 * `AtMost(K)` → subarrays with at most `k` distinct elements
 * `AtMost(K-1)` → subarrays with at most `k-1` distinct elements
 
-Subtracting gives subarrays with **exactly `k` distinct elements** ([AlgoMonster][1])
+Subtracting gives subarrays with **exactly `k` distinct elements**
 
 ---
 
