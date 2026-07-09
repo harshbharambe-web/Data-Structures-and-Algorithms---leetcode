@@ -106,4 +106,74 @@ Space: O(1)
 
 ---
 
+## 5. Largest Element in an Array
+
+🧩 **Problem**
+
+Given an array of integers, find the largest element in the array.
+
+### 💡 Approach (Brute Force)
+
+* Sort the array in ascending order.
+* Return the last element as the largest.
+
+⚙️ **Complexity**
+
+* **Time:** `O(n log n)`
+* **Space:** `O(1)`
+
+### 💡 Approach (Optimal)
+
+* Assume the first element is the largest.
+* Traverse the array once.
+* Update the largest element whenever a bigger element is found.
+* Return the largest element.
+
+⚙️ **Complexity**
+
+* **Time:** `O(n)`
+* **Space:** `O(1)`
+
+🎯 **Pattern**
+
+👉 Array Traversal / Simulation
+
+---
+
+## 6. Second Largest Element in an Array
+
+🧩 **Problem**
+
+Given an array of integers, find the second largest distinct element. If it does not exist, return `-1`.
+
+### 💡 Approach (Brute Force)
+
+* Sort the array in ascending order.
+* Store the largest element.
+* Traverse backward to find the first element different from the largest.
+* Return that element.
+
+⚙️ **Complexity**
+
+* **Time:** `O(n log n)`
+* **Space:** `O(1)`
+
+### 💡 Approach (Optimal)
+
+* Maintain two variables: `largest` and `secondLargest`.
+* Traverse the array once.
+* Update both variables whenever a larger element is found.
+* Ignore duplicate values of the largest element.
+* Return the second largest element.
+
+⚙️ **Complexity**
+
+* **Time:** `O(n)`
+* **Space:** `O(1)`
+
+🎯 **Pattern**
+
+👉 Array Traversal / Simulation
+
+
 
