@@ -27,40 +27,117 @@ Given a binary array `nums`, return the maximum number of consecutive 1's in the
 - Space: O(1)
 
 
-## 2. Remove Duplicates from Sorted Array
+# 2. Remove Duplicates from Sorted Array (LeetCode 26)
 
-## 📌 Problem
+🧩 **Problem**
 
-Given a sorted array `nums`, remove duplicates **in-place** such that each unique element appears only once. Return the number of unique elements `k`.
+Given a **sorted integer array** `nums`, remove the duplicates **in-place** such that each unique element appears only once.
 
-The first `k` elements of the array should contain the final result. ([LeetCode][1])
+Return the number of unique elements (`k`).
 
----
-
-## 💡 Approach
-
-* Use **Two Pointer Technique**
-* One pointer keeps track of unique elements
-* Another pointer scans the array
-* Replace duplicates while traversing
+The first `k` elements of the array should contain the unique elements in their original order.
 
 ---
 
-## ⏱ Complexity
+### 💡 Approach (Two Pointer)
 
-* **Time Complexity:** O(n)
-* **Space Complexity:** O(1)
+* If the array is empty, return `0`.
+* Use two pointers:
+  * `i` → Points to the last unique element.
+  * `j` → Traverses the array.
+* Compare `nums[j]` with `nums[i]`.
+* If they are different:
+  * Increment `i`.
+  * Copy `nums[j]` to `nums[i]`.
+* Continue until the end of the array.
+* Return `i + 1` as the count of unique elements.
 
 ---
 
-## 🎯 Key Concept
+### ⚙️ Complexity
 
-* Array is **sorted**, so duplicates are adjacent
-* No extra space allowed → must modify array in-place
-* Best solved using **Two Pointers**
+* **Time:** `O(n)`
+* **Space:** `O(1)`
 
 ---
 
+### 🎯 Pattern
+
+✅ Two Pointers  
+✅ In-Place Array Modification
+
+---
+
+## ☕ Java Solution
+
+```java
+class Solution {
+    public int removeDuplicates(int[] nums) {
+
+        if (nums.length == 0)
+            return 0;
+
+        int i = 0;
+
+        for (int j = 1; j < nums.length; j++) {
+
+            if (nums[i] != nums[j]) {
+                i++;
+                nums[i] = nums[j];
+            }
+
+        }
+
+        return i + 1;
+    }
+}
+```
+
+---
+
+## 📝 Example
+
+### Input
+
+```text
+nums = [0,0,1,1,1,2,2,3,3,4]
+```
+
+### Output
+
+```text
+5
+```
+
+### Modified Array
+
+```text
+[0,1,2,3,4,_,_,_,_,_]
+```
+
+(The remaining elements after index `k-1` are not important.)
+
+---
+
+## 🧠 Mnemonic
+
+**"Compare → New? → Move → Copy"**
+
+- `i` stores the last unique element.
+- `j` scans the array.
+- Whenever a new element is found:
+  - Move `i`
+  - Copy the new value
+- Return `i + 1`.
+
+---
+
+## 📌 Key Points
+
+- Works only because the array is **sorted**.
+- Removes duplicates **without using extra space**.
+- Maintains the original order of unique elements.
+- One of the most important **Two Pointer** interview problems.
 ## 3. Concatenation of Array
 
 ## 📌 Problem
