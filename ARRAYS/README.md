@@ -254,3 +254,34 @@ Given an array of integers, find the second largest distinct element. If it does
 
 
 
+## 8 Left Rotate Array by One Place
+
+## 🧩 Problem
+
+Given an integer array, rotate the array to the **left by one position**.
+
+### Example
+
+```text
+Input:  nums = [1,2,3,4,5]
+Output: [2,3,4,5,1]
+```
+
+---
+
+## 💡 Approach (Optimal)
+
+- Store the first element of the array in a temporary variable.
+- Traverse the array from index `0` to `n - 2`.
+- Shift every element one position to the left by assigning `nums[i] = nums[i + 1]`.
+- Place the stored first element at the last index of the array.
+
+### ⚙️ Complexity
+
+- **Time:** `O(n)`
+- **Space:** `O(1)`
+
+---
+
+
+
