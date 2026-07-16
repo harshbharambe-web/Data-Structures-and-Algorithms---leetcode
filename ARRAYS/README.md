@@ -284,4 +284,119 @@ Output: [2,3,4,5,1]
 ---
 
 
+## 9,
+ * LeetCode 189: Rotate Array
+ * https://leetcode.com/problems/rotate-array/
+ *
+ * Given an integer array nums, rotate the array to the right by k steps,
+ * where k is non-negative.
+ *
+ * This file contains 3 approaches (right rotate) + bonus left rotate:
+ *   1. Brute Force            -> O(n*k) time, O(1) space
+ *   2. Extra Array            -> O(n) time,   O(n) space
+ *   3. Reversal Trick (OPTIMAL)-> O(n) time,  O(1) space
+ *   4. Bonus: Left Rotate using Reversal Trick
+ */
+public class RotateArray {
+
+    // ---------------------------------------------------------
+    // 1. BRUTE FORCE APPROACH
+    // Rotate one step at a time, repeat k times.
+    // Time: O(n*k) | Space: O(1)
+    // ---------------------------------------------------------
+    public void rotateBruteForce(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n;
+
+        for (int i = 0; i < k; i++) {
+            int last = nums[n - 1];
+            for (int j = n - 1; j > 0; j--) {
+                nums[j] = nums[j - 1];
+            }
+            nums[0] = last;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 2. EXTRA ARRAY APPROACH
+    // Place each element directly at its rotated position.
+    // Time: O(n) | Space: O(n)
+    // ---------------------------------------------------------
+    public void rotateExtraArray(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n;
+
+        int[] temp = new int[n];
+        for (int i = 0; i < n; i++) {
+            temp[(i + k) % n] = nums[i];
+        }
+        System.arraycopy(temp, 0, nums, 0, n);
+    }
+
+    // ---------------------------------------------------------
+    // 3. REVERSAL TRICK (OPTIMAL) - RIGHT ROTATE
+    // Reverse whole array -> reverse first k -> reverse rest
+    // Time: O(n) | Space: O(1)
+    // ---------------------------------------------------------
+    public void rotateOptimal(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n;
+
+        reverse(nums, 0, n - 1);       // reverse whole array
+        reverse(nums, 0, k - 1);       // reverse first k elements
+        reverse(nums, k, n - 1);       // reverse remaining elements
+    }
+
+    // ---------------------------------------------------------
+    // 4. BONUS: LEFT ROTATE using Reversal Trick
+    // Reverse first k -> reverse rest -> reverse whole array
+    // Time: O(n) | Space: O(1)
+    // ---------------------------------------------------------
+    public void rotateLeftOptimal(int[] nums, int k) {
+        int n = nums.length;
+        k = k % n;
+
+        reverse(nums, 0, k - 1);       // reverse first k elements
+        reverse(nums, k, n - 1);       // reverse remaining elements
+        reverse(nums, 0, n - 1);       // reverse whole array
+    }
+
+    // ---------------------------------------------------------
+    // Helper: reverse nums[start..end] in place
+    // ---------------------------------------------------------
+    private void reverse(int[] nums, int start, int end) {
+        while (start < end) {
+            int temp = nums[start];
+            nums[start] = nums[end];
+            nums[end] = temp;
+            start++;
+            end--;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Quick test / demo
+    // ---------------------------------------------------------
+    public static void main(String[] args) {
+        RotateArray solver = new RotateArray();
+
+        int[] a1 = {1, 2, 3, 4, 5, 6, 7};
+        solver.rotateBruteForce(a1, 3);
+        System.out.println("Brute Force (right, k=3): " + java.util.Arrays.toString(a1));
+
+        int[] a2 = {1, 2, 3, 4, 5, 6, 7};
+        solver.rotateExtraArray(a2, 3);
+        System.out.println("Extra Array (right, k=3): " + java.util.Arrays.toString(a2));
+
+        int[] a3 = {1, 2, 3, 4, 5, 6, 7};
+        solver.rotateOptimal(a3, 3);
+        System.out.println("Optimal Reversal (right, k=3): " + java.util.Arrays.toString(a3));
+
+        int[] a4 = {1, 2, 3, 4, 5, 6, 7};
+        solver.rotateLeftOptimal(a4, 2);
+        System.out.println("Optimal Reversal (left, k=2): " + java.util.Arrays.toString(a4));
+    }
+}
+
+
 
