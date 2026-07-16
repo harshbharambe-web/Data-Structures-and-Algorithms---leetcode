@@ -7,7 +7,7 @@
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
 ![Problems](https://img.shields.io/badge/Problems-10-purple?style=flat-square)
 
-A curated set of **Array** problems solved with a **Brute Force → Optimal** progression, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
+Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
 </div>
 
@@ -37,13 +37,40 @@ A curated set of **Array** problems solved with a **Brute Force → Optimal** pr
 ### 🧩 Problem
 Given a binary array `nums`, return the maximum number of consecutive `1`'s in the array.
 
-### 💡 Approach (Optimal)
+### 💡 Approach 1 — Brute Force
+- For every index `i`, expand forward and count how many consecutive `1`'s start there.
+- Keep track of the maximum count seen.
+- Involves a nested loop → less efficient.
+
+```java
+class Solution {
+    public int findMaxConsecutiveOnesBrute(int[] nums) {
+        int maxCount = 0;
+
+        for (int i = 0; i < nums.length; i++) {
+            int count = 0;
+            for (int j = i; j < nums.length; j++) {
+                if (nums[j] == 1) {
+                    count++;
+                    maxCount = Math.max(maxCount, count);
+                } else {
+                    break;
+                }
+            }
+        }
+        return maxCount;
+    }
+}
+```
+- **Time:** O(n²)
+- **Space:** O(1)
+
+### 💡 Approach 2 — Optimal (Single Pass)
 - Traverse the array once.
 - Maintain a counter for consecutive `1`'s.
 - If current element is `1` → increment count, update max.
 - If current element is `0` → reset count to `0`.
 
-### ☕ Code
 ```java
 class Solution {
     public int findMaxConsecutiveOnes(int[] nums) {
@@ -62,7 +89,7 @@ class Solution {
 }
 ```
 
-### 📝 Dry Run
+### 📝 Dry Run (Optimal)
 `nums = [1,1,0,1,1,1]`
 
 | i | nums[i] | count | maxCount |
@@ -76,9 +103,12 @@ class Solution {
 
 **Result:** `3` ✅
 
-### ⚙️ Complexity
-- **Time:** O(n)
-- **Space:** O(1)
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force | O(n²) | O(1) |
+| **Single Pass (Optimal)** | **O(n)** | **O(1)** |
 
 ### 🎯 Pattern
 👉 Array Traversal / Counting
@@ -90,14 +120,38 @@ class Solution {
 ### 🧩 Problem
 Given a **sorted** integer array `nums`, remove duplicates **in-place** so each unique element appears once. Return the count of unique elements `k`. The first `k` elements should hold the unique values in original order.
 
-### 💡 Approach (Two Pointer) — Optimal
+### 💡 Approach 1 — Brute Force (Extra Space)
+- Use a `LinkedHashSet` (or list) to collect unique values while preserving order.
+- Copy the unique values back into `nums`.
+
+```java
+class Solution {
+    public int removeDuplicatesBrute(int[] nums) {
+        if (nums.length == 0) return 0;
+
+        Set<Integer> unique = new LinkedHashSet<>();
+        for (int num : nums) {
+            unique.add(num);
+        }
+
+        int i = 0;
+        for (int val : unique) {
+            nums[i++] = val;
+        }
+        return i;
+    }
+}
+```
+- **Time:** O(n)
+- **Space:** O(n) — extra set used
+
+### 💡 Approach 2 — Optimal (Two Pointer, In-Place)
 - If array is empty, return `0`.
 - `i` → tracks the last unique element's index.
 - `j` → scans ahead through the array.
 - If `nums[i] != nums[j]` → increment `i`, copy `nums[j]` into `nums[i]`.
 - Return `i + 1`.
 
-### ☕ Code
 ```java
 class Solution {
     public int removeDuplicates(int[] nums) {
@@ -115,7 +169,7 @@ class Solution {
 }
 ```
 
-### 📝 Dry Run
+### 📝 Dry Run (Optimal)
 `nums = [0,0,1,1,1,2,2,3,3,4]`
 
 | j | nums[j] | nums[i] | Action | i (after) |
@@ -132,9 +186,12 @@ class Solution {
 
 **Result:** `k = 5`, array → `[0,1,2,3,4,_,_,_,_,_]` ✅
 
-### ⚙️ Complexity
-- **Time:** O(n)
-- **Space:** O(1)
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Set) | O(n) | O(n) |
+| **Two Pointer (Optimal)** | **O(n)** | **O(1)** |
 
 ### 🎯 Pattern
 👉 Two Pointers · In-Place Modification
@@ -151,12 +208,33 @@ class Solution {
 ### 🧩 Problem
 Given an array `nums` of size `n`, return a new array of size `2n` where the second half is a duplicate of the first half.
 
-### 💡 Approach (Simulation) — Only approach needed
+### 💡 Approach 1 — Brute Force (Two Separate Loops)
 - Create a new array of size `2n`.
-- Copy `nums` into indices `0` to `n-1`.
-- Copy `nums` again into indices `n` to `2n-1`.
+- First loop: copy `nums` into indices `0` to `n-1`.
+- Second loop: copy `nums` again into indices `n` to `2n-1`.
 
-### ☕ Code
+```java
+class Solution {
+    public int[] getConcatenationBrute(int[] nums) {
+        int n = nums.length;
+        int[] ans = new int[2 * n];
+
+        for (int i = 0; i < n; i++) {
+            ans[i] = nums[i];
+        }
+        for (int i = 0; i < n; i++) {
+            ans[i + n] = nums[i];
+        }
+        return ans;
+    }
+}
+```
+- **Time:** O(n)
+- **Space:** O(n)
+
+### 💡 Approach 2 — Optimal (Single Combined Loop)
+- Fill both halves in **one** pass instead of two separate loops.
+
 ```java
 class Solution {
     public int[] getConcatenation(int[] nums) {
@@ -172,7 +250,7 @@ class Solution {
 }
 ```
 
-### 📝 Dry Run
+### 📝 Dry Run (Optimal)
 `nums = [1,2,1]`
 
 | i | ans[i] | ans[i+n] |
@@ -183,9 +261,12 @@ class Solution {
 
 **Result:** `[1,2,1,1,2,1]` ✅
 
-### ⚙️ Complexity
-- **Time:** O(n)
-- **Space:** O(n) *(required — output itself is size 2n)*
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Two Loops) | O(n) | O(n) |
+| **Optimal (One Loop)** | **O(n)** | **O(n)** *(output requires it)* |
 
 ### 🎯 Pattern
 👉 Array Traversal / Simulation
@@ -197,13 +278,37 @@ class Solution {
 ### 🧩 Problem
 Find the longest common prefix string among an array of strings. If no common prefix exists, return `""`.
 
-### 💡 Approach (Horizontal Scan) — Standard approach
+### 💡 Approach 1 — Brute Force (Vertical Scanning)
+- Compare characters **column by column** across all strings.
+- For each character position, check if it matches in every string.
+- Stop at the first mismatch or when the shortest string ends.
+
+```java
+class Solution {
+    public String longestCommonPrefixBrute(String[] strs) {
+        if (strs.length == 0) return "";
+
+        for (int i = 0; i < strs[0].length(); i++) {
+            char c = strs[0].charAt(i);
+            for (int j = 1; j < strs.length; j++) {
+                if (i == strs[j].length() || strs[j].charAt(i) != c) {
+                    return strs[0].substring(0, i);
+                }
+            }
+        }
+        return strs[0];
+    }
+}
+```
+- **Time:** O(n × m)
+- **Space:** O(1)
+
+### 💡 Approach 2 — Optimal (Horizontal Scanning)
 - Take the first string as a reference prefix.
-- Compare it against every other string, character by character.
+- Compare it against every other string as a whole.
 - Shrink the prefix whenever a mismatch or string-end is found.
 - Return the final prefix.
 
-### ☕ Code
 ```java
 class Solution {
     public String longestCommonPrefix(String[] strs) {
@@ -222,7 +327,7 @@ class Solution {
 }
 ```
 
-### 📝 Dry Run
+### 📝 Dry Run (Optimal)
 `strs = ["flower","flow","flight"]`
 
 | Step | Compare with | prefix (before) | prefix (after) |
@@ -232,9 +337,14 @@ class Solution {
 
 **Result:** `"fl"` ✅
 
-### ⚙️ Complexity
-- **Time:** O(n × m) — n = number of strings, m = length of shortest string
-- **Space:** O(1)
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Vertical Scan) | O(n × m) | O(1) |
+| Optimal (Horizontal Scan) | O(n × m) | O(1) |
+
+*Both are the same order here — the difference is scanning style (column-wise vs string-wise), and horizontal scan is generally preferred for cleaner early exits.*
 
 ### 🎯 Pattern
 👉 Array Traversal / Simulation
@@ -387,12 +497,35 @@ Input:  nums = [1,2,3,4,5]
 Output: [2,3,4,5,1]
 ```
 
-### 💡 Approach (Optimal)
+### 💡 Approach 1 — Brute Force (Extra Array)
+- Create a new array of the same size.
+- Copy `nums[1..n-1]` into positions `0..n-2` of the new array.
+- Place `nums[0]` at the last index of the new array.
+- Copy back into `nums`.
+
+```java
+class Solution {
+    public void leftRotateByOneBrute(int[] nums) {
+        int n = nums.length;
+        int[] temp = new int[n];
+
+        for (int i = 1; i < n; i++) {
+            temp[i - 1] = nums[i];
+        }
+        temp[n - 1] = nums[0];
+
+        System.arraycopy(temp, 0, nums, 0, n);
+    }
+}
+```
+- **Time:** O(n)
+- **Space:** O(n)
+
+### 💡 Approach 2 — Optimal (In-Place Shift)
 - Store `nums[0]` in a temp variable.
 - Shift every element one position left: `nums[i] = nums[i+1]`.
 - Place the stored value at the last index.
 
-### ☕ Code
 ```java
 class Solution {
     public void leftRotateByOne(int[] nums) {
@@ -407,7 +540,7 @@ class Solution {
 }
 ```
 
-### 📝 Dry Run
+### 📝 Dry Run (Optimal)
 `nums = [1,2,3,4,5]`
 
 | Step | Array State |
@@ -416,9 +549,12 @@ class Solution {
 | Shift left | `[2,3,4,5,5]` |
 | Place first at end | `[2,3,4,5,1]` ✅ |
 
-### ⚙️ Complexity
-- **Time:** O(n)
-- **Space:** O(1)
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Extra Array) | O(n) | O(n) |
+| **In-Place Shift (Optimal)** | **O(n)** | **O(1)** |
 
 ### 🎯 Pattern
 👉 Array Traversal / Simulation
@@ -531,7 +667,45 @@ Input: nums = [1,2,3,4,5,6,7], k = 2
 Output: [3,4,5,6,7,1,2]
 ```
 
-### 💡 Approach — Reversal Trick (Optimal)
+### 💡 Approach 1 — Brute Force
+Rotate one step to the left at a time, repeat `k` times.
+
+```java
+public void rotateLeftBruteForce(int[] nums, int k) {
+    int n = nums.length;
+    k = k % n;
+
+    for (int i = 0; i < k; i++) {
+        int first = nums[0];
+        for (int j = 0; j < n - 1; j++) {
+            nums[j] = nums[j + 1];
+        }
+        nums[n - 1] = first;
+    }
+}
+```
+- **Time:** O(n × k)
+- **Space:** O(1)
+
+### 💡 Approach 2 — Extra Array
+Place each element directly at its left-rotated index.
+
+```java
+public void rotateLeftExtraArray(int[] nums, int k) {
+    int n = nums.length;
+    k = k % n;
+
+    int[] temp = new int[n];
+    for (int i = 0; i < n; i++) {
+        temp[((i - k) % n + n) % n] = nums[i];
+    }
+    System.arraycopy(temp, 0, nums, 0, n);
+}
+```
+- **Time:** O(n)
+- **Space:** O(n)
+
+### 💡 Approach 3 — Reversal Trick (Optimal)
 Reverse first `k` → reverse remaining `n-k` → reverse whole array.
 
 ```java
@@ -544,8 +718,10 @@ public void rotateLeftOptimal(int[] nums, int k) {
     reverse(nums, 0, n - 1);
 }
 ```
+- **Time:** O(n)
+- **Space:** O(1)
 
-### 📝 Dry Run
+### 📝 Dry Run (Optimal)
 `nums = [1,2,3,4,5,6,7]`, `k = 2`
 
 | Step | Action | Array State |
@@ -554,9 +730,13 @@ public void rotateLeftOptimal(int[] nums, int k) {
 | 2 | Reverse remaining n-k=5 | `[2,1,7,6,5,4,3]` |
 | 3 | Reverse whole array | `[3,4,5,6,7,1,2]` ✅ |
 
-### ⚙️ Complexity
-- **Time:** O(n)
-- **Space:** O(1)
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force | O(n × k) | O(1) |
+| Extra Array | O(n) | O(n) |
+| **Reversal (Optimal)** | **O(n)** | **O(1)** |
 
 ### 🎯 Pattern
 👉 Reversal Trick — mirror image of right rotate (swap the reversal order)
@@ -646,15 +826,15 @@ class Solution {
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
 |---|---------|-------------|--------------|----------------|-----------------|
-| 1 | Max Consecutive Ones | — | — | O(n) | O(1) |
-| 2 | Remove Duplicates | — | — | O(n) | O(1) |
-| 3 | Concatenation of Array | O(n) | O(n) | — | — |
-| 4 | Longest Common Prefix | O(n×m) | O(1) | — | — |
+| 1 | Max Consecutive Ones | O(n²) | O(1) | O(n) | O(1) |
+| 2 | Remove Duplicates | O(n) | O(n) | O(n) | O(1) |
+| 3 | Concatenation of Array | O(n) | O(n) | O(n) | O(n) |
+| 4 | Longest Common Prefix | O(n×m) | O(1) | O(n×m) | O(1) |
 | 5 | Largest Element | O(n log n) | O(1) | O(n) | O(1) |
 | 6 | Second Largest Element | O(n log n) | O(1) | O(n) | O(1) |
-| 7 | Left Rotate by One | — | — | O(n) | O(1) |
+| 7 | Left Rotate by One | O(n) | O(n) | O(n) | O(1) |
 | 8 | Rotate Array (Right, k) | O(n×k) | O(1) | O(n) | O(1) |
-| 9 | Left Rotate by k | — | — | O(n) | O(1) |
+| 9 | Left Rotate by k | O(n×k) | O(1) | O(n) | O(1) |
 | 10 | Move Zeroes | O(n) | O(n) | O(n) | O(1) |
 
 ---
