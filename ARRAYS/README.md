@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-10-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-12-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -27,6 +27,8 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 8 | [Rotate Array (Right, by k)](#8-rotate-array-leetcode-189) | Reversal Trick |
 | 9 | [Left Rotate Array by k Places](#9-left-rotate-array-by-k-places) | Reversal Trick |
 | 10 | [Move Zeroes](#10-move-zeroes-leetcode-283) | Two Pointer |
+| 11 | [Single Number](#11-single-number-leetcode-136) | XOR / Bit Manipulation |
+| 12 | [Two Sum](#12-two-sum-leetcode-1) | HashMap / Complement Lookup |
 
 ---
 
@@ -822,6 +824,173 @@ class Solution {
 
 ---
 
+## 11. Single Number (LeetCode 136)
+
+### 🧩 Problem
+Given a non-empty array of integers `nums`, every element appears **twice** except for one. Find that single one — must run in O(n) time and O(1) extra space.
+
+```text
+Input: nums = [4,1,2,1,2]
+Output: 4
+```
+
+### 💡 Approach 1 — Brute Force (HashMap Frequency Count)
+- Count occurrences of every number.
+- Scan again for the one with count `1`.
+
+```java
+class Solution {
+    public int singleNumberBrute(int[] nums) {
+        HashMap<Integer, Integer> countMap = new HashMap<>();
+
+        for (int num : nums) {
+            countMap.put(num, countMap.getOrDefault(num, 0) + 1);
+        }
+
+        for (int num : nums) {
+            if (countMap.get(num) == 1) {
+                return num;
+            }
+        }
+        return -1; // unreachable given constraints
+    }
+}
+```
+- **Time:** O(n)
+- **Space:** O(n) — extra map used; violates the O(1) space requirement
+
+### 💡 Approach 2 — Optimal (XOR Accumulation)
+- XOR every element together in a single pass.
+- Duplicate pairs cancel to `0` (`a ^ a = 0`); XOR with `0` leaves a value unchanged (`a ^ 0 = a`).
+- Whatever survives is the single number.
+
+```java
+class Solution {
+    public int singleNumber(int[] nums) {
+        int result = 0;
+        for (int num : nums) {
+            result ^= num;
+        }
+        return result;
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`nums = [4,1,2,1,2]`
+
+| Step | num | result (running XOR) |
+|------|-----|------------------------|
+| start | — | 0 |
+| 1 | 4 | 0 ^ 4 = 4 |
+| 2 | 1 | 4 ^ 1 = 5 |
+| 3 | 2 | 5 ^ 2 = 7 |
+| 4 | 1 | 7 ^ 1 = 6 |
+| 5 | 2 | 6 ^ 2 = 4 |
+
+**Result:** `4` ✅
+
+**Why it works (regrouping via associativity/commutativity):**
+```
+4 ^ 1 ^ 2 ^ 1 ^ 2
+= 4 ^ (1 ^ 1) ^ (2 ^ 2)   // pairs cancel: a ^ a = 0
+= 4 ^ 0 ^ 0
+= 4                        // a ^ 0 = a
+```
+Java evaluates left-to-right, but XOR is order-independent, so the final result always matches this regrouped form regardless of where duplicates sit in the array.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (HashMap) | O(n) | O(n) |
+| **XOR Accumulation (Optimal)** | **O(n)** | **O(1)** |
+
+### 🎯 Pattern
+👉 XOR / Bit Manipulation — same "cancel-the-pairs" idea reappears in Single Number II/III.
+
+---
+
+## 12. Two Sum (LeetCode 1)
+
+### 🧩 Problem
+Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to `target`. Exactly one solution exists; the same element cannot be used twice. Array is **not sorted**.
+
+```text
+Input: nums = [2,7,11,15], target = 9
+Output: [0,1]
+```
+
+### 💡 Approach 1 — Brute Force (Nested Loop)
+Try every pair of elements and check if they sum to `target`.
+
+```java
+class Solution {
+    public int[] twoSumBrute(int[] nums, int target) {
+        for (int i = 0; i < nums.length; i++) {
+            for (int j = i + 1; j < nums.length; j++) {
+                if (nums[i] + nums[j] == target) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        return new int[]{-1, -1}; // unreachable given constraints
+    }
+}
+```
+- **Time:** O(n²)
+- **Space:** O(1)
+
+### 💡 Approach 2 — Optimal (HashMap Complement Lookup)
+- For each element, compute the `complement` needed to hit `target`.
+- Check if that complement was already seen (O(1) lookup).
+- If not, store the current value with its index and move on.
+
+```java
+class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        HashMap<Integer, Integer> map = new HashMap<>(); // value -> index
+
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+
+            if (map.containsKey(complement)) {
+                return new int[]{map.get(complement), i};
+            }
+
+            map.put(nums[i], i);
+        }
+        return new int[]{-1, -1}; // unreachable given constraints
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`nums = [2,7,11,15]`, `target = 9`
+
+| i | nums[i] | complement | in map? | map after |
+|---|---------|------------|---------|-----------|
+| 0 | 2 | 9-2=7 | No (empty) | {2:0} |
+| 1 | 7 | 9-7=2 | Yes → index 0 | return `[0,1]` |
+
+**Result:** `[0,1]` ✅
+
+**Why it works:** The map only ever holds elements seen *before* the current index, so an element can never pair with itself. `containsKey()` is O(1) average, turning an O(n²) pair search into a single O(n) pass.
+
+**Note on Two Pointers:** Two-pointer (`left`/`right` converging) only works on a **sorted** array, since moving a pointer inward changes the sum in a predictable direction. This array is unsorted and original indices must be preserved, so sorting would scramble index positions — making two-pointer unsuitable here. *(Two-pointer is the correct approach for the sorted variant: LeetCode 167 — Two Sum II.)*
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Nested Loop) | O(n²) | O(1) |
+| **HashMap (Optimal)** | **O(n)** | **O(n)** |
+
+### 🎯 Pattern
+👉 HashMap / Complement Lookup — reusable pattern seen again in 3Sum, 4Sum, Subarray Sum Equals K.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -836,6 +1005,8 @@ class Solution {
 | 8 | Rotate Array (Right, k) | O(n×k) | O(1) | O(n) | O(1) |
 | 9 | Left Rotate by k | O(n×k) | O(1) | O(n) | O(1) |
 | 10 | Move Zeroes | O(n) | O(n) | O(n) | O(1) |
+| 11 | Single Number | O(n) | O(n) | O(n) | O(1) |
+| 12 | Two Sum | O(n²) | O(1) | O(n) | O(n) |
 
 ---
 
@@ -845,6 +1016,8 @@ class Solution {
 - **In-Place Reversal** — Rotate Array (left & right)
 - **Single-Pass Traversal** — Max Consecutive Ones, Largest/Second Largest Element
 - **Simulation** — Concatenation, Longest Common Prefix, Left Rotate by One
+- **XOR / Bit Manipulation** — Single Number
+- **HashMap / Complement Lookup** — Two Sum
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
