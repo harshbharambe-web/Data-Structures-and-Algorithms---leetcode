@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-12-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-13-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -29,6 +29,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 10 | [Move Zeroes](#10-move-zeroes-leetcode-283) | Two Pointer |
 | 11 | [Single Number](#11-single-number-leetcode-136) | XOR / Bit Manipulation |
 | 12 | [Two Sum](#12-two-sum-leetcode-1) | HashMap / Complement Lookup |
+| 13 | [Sort Colors](#13-sort-colors-leetcode-75) | Three-Way Partitioning |
 
 ---
 
@@ -991,6 +992,114 @@ class Solution {
 
 ---
 
+## 13. Sort Colors (LeetCode 75)
+
+### 🧩 Problem
+Given an array `nums` with `n` objects colored red, white, or blue (represented by `0`, `1`, `2`), sort them **in-place** so objects of the same color are adjacent, in the order red, white, blue — **without using a library sort function**.
+
+```text
+Input:  nums = [2,0,2,1,1,0]
+Output: [0,0,1,1,2,2]
+```
+
+### 💡 Approach 1 — Brute Force (Library Sort)
+- Just call `Arrays.sort()`. Works, but violates the problem's constraint and doesn't demonstrate understanding of the structure (only 3 distinct values).
+
+```java
+class Solution {
+    public void sortColorsBrute(int[] nums) {
+        Arrays.sort(nums);
+    }
+}
+```
+- **Time:** O(n log n)
+- **Space:** O(1)
+
+### 💡 Approach 2 — Better (Counting Sort, Two Pass)
+- Count occurrences of `0`, `1`, `2` in one pass.
+- Overwrite the array in a second pass using the counts.
+
+```java
+class Solution {
+    public void sortColorsCounting(int[] nums) {
+        int count0 = 0, count1 = 0, count2 = 0;
+
+        for (int num : nums) {
+            if (num == 0) count0++;
+            else if (num == 1) count1++;
+            else count2++;
+        }
+
+        int i = 0;
+        while (count0-- > 0) nums[i++] = 0;
+        while (count1-- > 0) nums[i++] = 1;
+        while (count2-- > 0) nums[i++] = 2;
+    }
+}
+```
+- **Time:** O(n) — but two passes
+- **Space:** O(1)
+
+### 💡 Approach 3 — Optimal (Dutch National Flag Algorithm, Single Pass)
+- Maintain three pointers: `low` (boundary for `0`s), `mid` (current element), `high` (boundary for `2`s).
+- `nums[mid] == 0` → swap with `low`, advance both `low` and `mid`.
+- `nums[mid] == 1` → already in place, advance `mid`.
+- `nums[mid] == 2` → swap with `high`, decrement `high` — **don't** advance `mid`, since the swapped-in element from `high` hasn't been checked yet.
+- Loop while `mid <= high`.
+
+```java
+class Solution {
+    public void sortColors(int[] nums) {
+        int low = 0;
+        int mid = 0;
+        int high = nums.length - 1;
+
+        while (mid <= high) {
+            if (nums[mid] == 0) {
+                int temp = nums[mid];
+                nums[mid] = nums[low];
+                nums[low] = temp;
+                low++;
+                mid++;
+            } else if (nums[mid] == 1) {
+                mid++;
+            } else {
+                int temp = nums[mid];
+                nums[mid] = nums[high];
+                nums[high] = temp;
+                high--;
+                // mid stays put — recheck swapped-in value
+            }
+        }
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`nums = [2,0,1]`
+
+| low | mid | high | nums[mid] | Action | Array State |
+|-----|-----|------|-----------|--------|--------------|
+| 0 | 0 | 2 | 2 | swap(mid,high), high-- | `[1,0,2]` |
+| 0 | 0 | 1 | 1 | mid++ | `[1,0,2]` |
+| 0 | 1 | 1 | 0 | swap(low,mid), low++, mid++ | `[0,1,2]` |
+| — | 2 | 1 | — | mid > high → stop | `[0,1,2]` |
+
+**Result:** `[0,1,2]` ✅
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Library Sort) | O(n log n) | O(1) |
+| Counting Sort (Two Pass) | O(n) | O(1) |
+| **Dutch National Flag (Optimal)** | **O(n)** | **O(1)** |
+
+### 🎯 Pattern
+👉 Three-Way Partitioning / Two Pointer — a specialized variant of the two-pointer pattern for arrays with a small, fixed set of distinct values (also underlies quicksort's 3-way partition scheme).
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1007,6 +1116,7 @@ class Solution {
 | 10 | Move Zeroes | O(n) | O(n) | O(n) | O(1) |
 | 11 | Single Number | O(n) | O(n) | O(n) | O(1) |
 | 12 | Two Sum | O(n²) | O(1) | O(n) | O(n) |
+| 13 | Sort Colors | O(n log n) | O(1) | O(n) | O(1) |
 
 ---
 
@@ -1018,6 +1128,7 @@ class Solution {
 - **Simulation** — Concatenation, Longest Common Prefix, Left Rotate by One
 - **XOR / Bit Manipulation** — Single Number
 - **HashMap / Complement Lookup** — Two Sum
+- **Three-Way Partitioning** — Sort Colors (Dutch National Flag)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
