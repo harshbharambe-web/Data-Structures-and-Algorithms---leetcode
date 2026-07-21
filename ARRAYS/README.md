@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-13-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-14-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -30,6 +30,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 11 | [Single Number](#11-single-number-leetcode-136) | XOR / Bit Manipulation |
 | 12 | [Two Sum](#12-two-sum-leetcode-1) | HashMap / Complement Lookup |
 | 13 | [Sort Colors](#13-sort-colors-leetcode-75) | Three-Way Partitioning |
+| 14 | [Majority Element](#14-majority-element-leetcode-169) | Boyer-Moore Voting |
 
 ---
 
@@ -1100,6 +1101,104 @@ class Solution {
 
 ---
 
+## 14. Majority Element (LeetCode 169)
+
+### 🧩 Problem
+Given an array of size `n`, return the majority element — the element that appears **more than `⌊n/2⌋` times**. The problem guarantees a majority element always exists.
+
+```text
+Input:  nums = [2,2,1,1,1,2,2]
+Output: 2
+```
+
+### 💡 Approach 1 — Brute Force (HashMap Frequency Count)
+- Count frequency of each element using a hashmap.
+- Traverse the map to find the element with the maximum frequency.
+
+```java
+class Solution {
+    public int majorityElementBrute(int[] nums) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+        }
+
+        int candidate = nums[0];
+        int maxCount = 0;
+        for (int key : map.keySet()) {
+            if (map.get(key) > maxCount) {
+                maxCount = map.get(key);
+                candidate = key;
+            }
+        }
+        return candidate;
+    }
+}
+```
+- **Time:** O(n)
+- **Space:** O(n) — extra hashmap used
+
+### 💡 Approach 2 — Optimal (Boyer-Moore Voting Algorithm)
+- Maintain a `candidate` and a `count`.
+- If `count == 0`, set `candidate = nums[i]`.
+- If `nums[i] == candidate`, increment `count`; otherwise decrement it.
+- Since the majority element appears more than `n/2` times, it always "outlasts" the cancellations from every other element combined — whatever candidate remains at the end is guaranteed correct.
+
+```java
+class Solution {
+    public int majorityElement(int[] nums) {
+        int candidate = 0;
+        int count = 0;
+
+        for (int i = 0; i < nums.length; i++) {
+            if (count == 0) {
+                candidate = nums[i];
+            }
+            if (candidate == nums[i]) {
+                count++;
+            } else {
+                count--;
+            }
+        }
+        return candidate;
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`nums = [2,2,1,1,1,2,2]`
+
+| index | element | count before | action | candidate | count after |
+|---|---|---|---|---|---|
+| 0 | 2 | 0 | count=0 → candidate=2 | 2 | 1 |
+| 1 | 2 | 1 | match → count++ | 2 | 2 |
+| 2 | 1 | 2 | no match → count-- | 2 | 1 |
+| 3 | 1 | 1 | no match → count-- | 2 | 0 |
+| 4 | 1 | 0 | count=0 → candidate=1 | 1 | 1 |
+| 5 | 2 | 1 | no match → count-- | 1 | 0 |
+| 6 | 2 | 0 | count=0 → candidate=2 | 2 | 1 |
+
+**Result:** `2` ✅ (appears 4/7 times — matches the guarantee of >⌊n/2⌋)
+
+Note that the candidate flips mid-way (2 → 1 → 2) and `count` even hits `0` a few times — that's expected. The algorithm only guarantees the **final** candidate is correct, since the true majority element always has enough "votes" to outlast every dip.
+
+**Edge case:** Single-element array `[5]` → `count == 0` sets `candidate = 5`, then `candidate == nums[0]` → `count++` → returns `5` ✅
+
+**Related insight — sorting approach:** Since the majority element occupies more than half the array, after sorting it is always guaranteed to sit at index `n/2` (0-indexed). This gives an alternative O(n log n) solution via `Arrays.sort()` + return `nums[n/2]`.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (HashMap) | O(n) | O(n) |
+| Sorting (`arr[n/2]`) | O(n log n) | O(1) |
+| **Boyer-Moore Voting (Optimal)** | **O(n)** | **O(1)** |
+
+### 🎯 Pattern
+👉 Boyer-Moore Voting Algorithm — candidate/counter "tug-of-war" pattern, foundational for Majority Element II and other voting-based problems.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1117,6 +1216,7 @@ class Solution {
 | 11 | Single Number | O(n) | O(n) | O(n) | O(1) |
 | 12 | Two Sum | O(n²) | O(1) | O(n) | O(n) |
 | 13 | Sort Colors | O(n log n) | O(1) | O(n) | O(1) |
+| 14 | Majority Element | O(n) | O(n) | O(n) | O(1) |
 
 ---
 
@@ -1129,6 +1229,7 @@ class Solution {
 - **XOR / Bit Manipulation** — Single Number
 - **HashMap / Complement Lookup** — Two Sum
 - **Three-Way Partitioning** — Sort Colors (Dutch National Flag)
+- **Boyer-Moore Voting** — Majority Element (candidate/counter cancellation)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
