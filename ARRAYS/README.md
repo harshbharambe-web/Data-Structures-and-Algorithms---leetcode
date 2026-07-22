@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-14-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-15-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -31,6 +31,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 12 | [Two Sum](#12-two-sum-leetcode-1) | HashMap / Complement Lookup |
 | 13 | [Sort Colors](#13-sort-colors-leetcode-75) | Three-Way Partitioning |
 | 14 | [Majority Element](#14-majority-element-leetcode-169) | Boyer-Moore Voting |
+| 15 | [Best Time to Buy and Sell Stock](#15-best-time-to-buy-and-sell-stock-leetcode-121) | Running Min / Kadane-style |
 
 ---
 
@@ -1199,6 +1200,92 @@ Note that the candidate flips mid-way (2 → 1 → 2) and `count` even hits `0` 
 
 ---
 
+## 15. Best Time to Buy and Sell Stock (LeetCode 121)
+
+### 🧩 Problem
+Given an array `prices` where `prices[i]` is the stock price on day `i`, find the maximum profit achievable by buying on one day and selling on a **later** day. If no profit is possible, return `0`. Only **one** transaction is allowed (one buy + one sell).
+
+```text
+Input:  prices = [7,1,5,3,6,4]
+Output: 5   // buy at 1, sell at 6
+```
+
+### 💡 Approach 1 — Brute Force (Check Every Pair)
+- For every day `i`, check every later day `j` and compute `prices[j] - prices[i]`.
+- Track the maximum profit seen across all pairs.
+
+```java
+class Solution {
+    public int maxProfitBrute(int[] prices) {
+        int n = prices.length;
+        int maxProfit = 0;
+
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int profit = prices[j] - prices[i];
+                maxProfit = Math.max(maxProfit, profit);
+            }
+        }
+        return maxProfit;
+    }
+}
+```
+- **Time:** O(n²)
+- **Space:** O(1)
+
+### 💡 Approach 2 — Optimal (Single Pass, Running Minimum)
+- Track the minimum price seen so far (`min`) while scanning left to right.
+- At each day, compute the profit from selling today after buying at `min`.
+- Keep a running `profit = max(profit, prices[i] - min)`.
+- Since `profit` starts at `0` and is only ever updated via `max()` against itself, it can never go negative — no separate "if profit < 0" guard is needed.
+
+```java
+class Solution {
+    public int maxProfit(int[] prices) {
+        int n = prices.length;
+        int profit = 0;
+        int min = prices[0];
+
+        for (int i = 0; i < n; i++) {
+            min = Math.min(prices[i], min);
+            int sum = prices[i] - min;
+            profit = Math.max(profit, sum);
+        }
+        return profit;
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`prices = [7,1,5,3,6,4]`
+
+| i | prices[i] | min (after update) | sum | profit (after max) |
+|---|---|---|---|---|
+| 0 | 7 | 7 | 0 | 0 |
+| 1 | 1 | 1 | 0 | 0 |
+| 2 | 5 | 1 | 4 | 4 |
+| 3 | 3 | 1 | 2 | 4 |
+| 4 | 6 | 1 | 5 | 5 |
+| 5 | 4 | 1 | 3 | 5 |
+
+**Result:** `5` ✅ (buy at 1, sell at 6)
+
+**Edge case — strictly decreasing array:** `prices = [7,6,4,3,1]` → `min` keeps dropping to match `prices[i]` every step, so `sum` is always `0` and `profit` stays `0` the whole way through — correctly signaling "no profitable trade exists," with no negative values ever appearing.
+
+**Why the running-minimum trick works:** At any index `i`, the best possible profit selling on that day is `prices[i] - (lowest price at or before i)`. Tracking that lowest price as you go — instead of re-scanning backward for it — is what collapses the O(n²) pair search into a single O(n) pass.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Check Every Pair) | O(n²) | O(1) |
+| **Running Minimum (Optimal)** | **O(n)** | **O(1)** |
+
+### 🎯 Pattern
+👉 Running Min/Max — Single Pass — same "track-a-running-value-as-you-scan" idea as Largest/Second Largest Element, generalizes to Best Time to Buy and Sell Stock II/III/IV variants.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1217,6 +1304,7 @@ Note that the candidate flips mid-way (2 → 1 → 2) and `count` even hits `0` 
 | 12 | Two Sum | O(n²) | O(1) | O(n) | O(n) |
 | 13 | Sort Colors | O(n log n) | O(1) | O(n) | O(1) |
 | 14 | Majority Element | O(n) | O(n) | O(n) | O(1) |
+| 15 | Best Time to Buy and Sell Stock | O(n²) | O(1) | O(n) | O(1) |
 
 ---
 
@@ -1225,6 +1313,7 @@ Note that the candidate flips mid-way (2 → 1 → 2) and `count` even hits `0` 
 - **Two-Pointer Technique** — Remove Duplicates, Move Zeroes, Reversal Trick
 - **In-Place Reversal** — Rotate Array (left & right)
 - **Single-Pass Traversal** — Max Consecutive Ones, Largest/Second Largest Element
+- **Running Min/Max Tracking** — Best Time to Buy and Sell Stock
 - **Simulation** — Concatenation, Longest Common Prefix, Left Rotate by One
 - **XOR / Bit Manipulation** — Single Number
 - **HashMap / Complement Lookup** — Two Sum
