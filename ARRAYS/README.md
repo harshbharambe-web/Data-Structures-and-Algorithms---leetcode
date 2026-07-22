@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-16-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-17-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -33,6 +33,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 14 | [Majority Element](#14-majority-element-leetcode-169) | Boyer-Moore Voting |
 | 15 | [Best Time to Buy and Sell Stock](#15-best-time-to-buy-and-sell-stock-leetcode-121) | Running Min / Kadane-style |
 | 16 | [Rearrange Array Elements by Sign](#16-rearrange-array-elements-by-sign-leetcode-2149) | Single Pass / Direct Placement |
+| 17 | [Next Permutation](#17-next-permutation-leetcode-31) | In-Place / Pivot & Reverse |
 
 ---
 
@@ -1391,6 +1392,118 @@ class Solution {
 
 ---
 
+## 17. Next Permutation (LeetCode 31)
+
+### 🧩 Problem
+Given an array of integers `nums`, rearrange it into the lexicographically **next greater** permutation. If no such permutation exists (array is the highest possible permutation), rearrange into the **lowest** possible order (sorted ascending) — in-place, using only constant extra space.
+
+```text
+Input:  nums = [1,3,2]
+Output: [2,1,3]
+
+Input:  nums = [3,2,1]
+Output: [1,2,3]   // wraps around to smallest
+```
+
+### 💡 Approach 1 — Brute Force (Generate All Permutations)
+- Conceptually: generate every permutation of `nums`, sort them lexicographically, locate the current arrangement, and return the one right after it (wrapping to the first if current is the last).
+- Wildly impractical for real input sizes, but useful as a baseline for understanding what "next permutation" even means.
+
+```java
+// Conceptual only — not a viable submission for LC 31
+class Solution {
+    public int[] nextPermutationBrute(int[] nums) {
+        List<int[]> all = generateAllPermutations(nums); // O(n!) permutations
+        Collections.sort(all, (a, b) -> Arrays.compare(a, b));
+
+        int idx = indexOf(all, nums);
+        return all.get((idx + 1) % all.size());
+    }
+}
+```
+- **Time:** O(n! × n log n) — generating and sorting all permutations
+- **Space:** O(n! × n) — storing every permutation
+
+### 💡 Approach 2 — Optimal (In-Place: Find Pivot → Swap → Reverse Suffix)
+- Scan from the right to find the first index `pivot` where `nums[pivot] < nums[pivot+1]` — this marks the first place the sequence can be "increased." Everything to the right of `pivot` is currently in descending order (the largest possible suffix arrangement).
+- If no such `pivot` exists, the whole array is in descending order — it's the last permutation, so reverse the entire array to wrap to the smallest.
+- Otherwise, scan from the right again to find the smallest value greater than `nums[pivot]`, and swap it with `nums[pivot]`.
+- Finally, reverse everything after `pivot` — since that suffix was descending, reversing it makes it ascending, giving the smallest possible arrangement for that suffix (and therefore the smallest possible increase overall).
+
+```java
+class Solution {
+    public void nextPermutation(int[] nums) {
+        int n = nums.length;
+        int pivot = -1;
+
+        for (int i = n - 2; i >= 0; i--) {
+            if (nums[i] < nums[i + 1]) {
+                pivot = i;
+                break;
+            }
+        }
+
+        if (pivot == -1) {
+            int left = 0, right = n - 1;
+            while (left < right) {
+                int temp = nums[left];
+                nums[left] = nums[right];
+                nums[right] = temp;
+                left++;
+                right--;
+            }
+            return;
+        }
+
+        for (int i = n - 1; i > pivot; i--) {
+            if (nums[i] > nums[pivot]) {
+                int temp = nums[i];
+                nums[i] = nums[pivot];
+                nums[pivot] = temp;
+                break;
+            }
+        }
+
+        int start = pivot + 1;
+        int end = n - 1;
+        while (start < end) {
+            int temp = nums[start];
+            nums[start] = nums[end];
+            nums[end] = temp;
+            start++;
+            end--;
+        }
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`nums = [1,3,2]`
+
+| Step | Action | Array State |
+|---|---|---|
+| Find pivot | Scan right→left: `nums[1]=3 < nums[2]=2`? No. `nums[0]=1 < nums[1]=3`? Yes → `pivot=0` | `[1,3,2]` |
+| Find swap candidate | Scan right→left from end: `nums[2]=2 > nums[0]=1` → swap | `[2,3,1]` |
+| Reverse suffix after pivot | `start=1, end=2` → swap | `[2,1,3]` |
+
+**Result:** `[2,1,3]` ✅
+
+**Edge case — descending array:** `nums = [3,2,1]` → no valid `pivot` found → full-array reverse → `[1,2,3]` ✅ (wraps to smallest).
+
+**Edge case — duplicates:** `nums = [1,1,5]` → `pivot=1` (`1 < 5`) → swap candidate `nums[2]=5 > nums[1]=1` → swap → `[1,5,1]` → reverse suffix (`start=end=2`, no-op) → **Result:** `[1,5,1]` ✅
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (All Permutations) | O(n! × n log n) | O(n! × n) |
+| **Pivot & Reverse (Optimal)** | **O(n)** | **O(1)** |
+
+### 🎯 Pattern
+👉 In-Place / Pivot & Reverse — three linear scans (find pivot, find swap target, reverse suffix), no nesting; the descending-suffix property is what makes the final reversal valid.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1411,6 +1524,7 @@ class Solution {
 | 14 | Majority Element | O(n) | O(n) | O(n) | O(1) |
 | 15 | Best Time to Buy and Sell Stock | O(n²) | O(1) | O(n) | O(1) |
 | 16 | Rearrange Array Elements by Sign | O(n) | O(n) | O(n) | O(n) |
+| 17 | Next Permutation | O(n! × n log n) | O(n! × n) | O(n) | O(1) |
 
 ---
 
@@ -1426,6 +1540,7 @@ class Solution {
 - **Three-Way Partitioning** — Sort Colors (Dutch National Flag)
 - **Boyer-Moore Voting** — Majority Element (candidate/counter cancellation)
 - **Single Pass / Direct Placement** — Rearrange Array Elements by Sign (exploiting known output structure)
+- **In-Place / Pivot & Reverse** — Next Permutation (find pivot, swap, reverse descending suffix)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
