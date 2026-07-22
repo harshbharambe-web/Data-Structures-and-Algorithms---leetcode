@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-15-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-16-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -32,6 +32,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 13 | [Sort Colors](#13-sort-colors-leetcode-75) | Three-Way Partitioning |
 | 14 | [Majority Element](#14-majority-element-leetcode-169) | Boyer-Moore Voting |
 | 15 | [Best Time to Buy and Sell Stock](#15-best-time-to-buy-and-sell-stock-leetcode-121) | Running Min / Kadane-style |
+| 16 | [Rearrange Array Elements by Sign](#16-rearrange-array-elements-by-sign-leetcode-2149) | Single Pass / Direct Placement |
 
 ---
 
@@ -1286,6 +1287,110 @@ class Solution {
 
 ---
 
+## 16. Rearrange Array Elements by Sign (LeetCode 2149)
+
+### 🧩 Problem
+Given a 0-indexed integer array `nums` of even length with an **equal** number of positive and negative integers, rearrange it so that:
+1. Every consecutive pair has opposite signs.
+2. Relative order among same-sign elements is preserved.
+3. The array begins with a positive integer.
+
+```text
+Input:  nums = [3,1,-2,-5,2,-4]
+Output: [3,-2,1,-5,2,-4]
+```
+
+### 💡 Approach 1 — Brute Force (Separate Lists, Then Interleave)
+- Traverse `nums` once, collecting positives into `pos[]` and negatives into `neg[]`, preserving order in each.
+- Since positives and negatives are guaranteed equal in count (`n/2` each), interleave them into the result: `res[2k] = pos[k]`, `res[2k+1] = neg[k]`.
+
+```java
+class Solution {
+    public int[] rearrangeArrayTwoArrays(int[] nums) {
+        int n = nums.length;
+        int[] pos = new int[n / 2];
+        int[] neg = new int[n / 2];
+        int posIdx = 0, negIdx = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (nums[i] > 0) {
+                pos[posIdx++] = nums[i];
+            } else {
+                neg[negIdx++] = nums[i];
+            }
+        }
+
+        int[] res = new int[n];
+        for (int k = 0; k < n / 2; k++) {
+            res[2 * k] = pos[k];
+            res[2 * k + 1] = neg[k];
+        }
+        return res;
+    }
+}
+```
+- **Time:** O(n) — two passes
+- **Space:** O(n) — extra `pos[]`/`neg[]` arrays, plus `res`
+
+### 💡 Approach 2 — Optimal (Single Pass, Direct Placement)
+- Skip the intermediate `pos`/`neg` arrays entirely.
+- Since positives always land on **even** indices and negatives on **odd** indices in the final answer (guaranteed by the equal-split constraint), write directly into `res` as you scan `nums` once.
+- Maintain `posIdx` starting at `0` (next free even slot) and `negIdx` starting at `1` (next free odd slot); each increases by `2` after a placement.
+
+```java
+class Solution {
+    public int[] rearrangeArray(int[] nums) {
+        int n = nums.length;
+        int[] res = new int[n];
+
+        int posIdx = 0;
+        int negIdx = 1;
+
+        for (int i = 0; i < n; i++) {
+            if (nums[i] < 0) {
+                res[negIdx] = nums[i];
+                negIdx += 2;
+            } else {
+                res[posIdx] = nums[i];
+                posIdx += 2;
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`nums = [3,1,-2,-5,2,-4]`
+
+| i | nums[i] | sign | action | res state | posIdx / negIdx after |
+|---|---------|------|--------|-----------|-------------------------|
+| 0 | 3 | + | res[0]=3 | `[3,_,_,_,_,_]` | posIdx=2 |
+| 1 | 1 | + | res[2]=1 | `[3,_,1,_,_,_]` | posIdx=4 |
+| 2 | -2 | − | res[1]=-2 | `[3,-2,1,_,_,_]` | negIdx=3 |
+| 3 | -5 | − | res[3]=-5 | `[3,-2,1,-5,_,_]` | negIdx=5 |
+| 4 | 2 | + | res[4]=2 | `[3,-2,1,-5,2,_]` | posIdx=6 |
+| 5 | -4 | − | res[5]=-4 | `[3,-2,1,-5,2,-4]` | negIdx=7 |
+
+**Result:** `[3,-2,1,-5,2,-4]` ✅
+
+**Edge case:** `nums = [-1,1]` — `i=0`: `-1` is negative → `res[1] = -1`, `negIdx=3`. `i=1`: `1` is positive → `res[0] = 1`, `posIdx=2`. Final `res = [1,-1]` ✅ — starts positive regardless of the order elements appear in the input, since placement is driven by the fixed even/odd slot pattern, not by input order.
+
+**Why this beats the two-array approach:** no intermediate `pos[]`/`neg[]` storage is needed — the even/odd index pattern is known in advance from the problem's guarantee, so each element can be dropped directly into its final resting place in one traversal.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Separate Lists + Interleave | O(n) | O(n) *(pos/neg + res)* |
+| **Single Pass Direct Placement (Optimal)** | **O(n)** | **O(n)** *(res only, output requires it)* |
+
+### 🎯 Pattern
+👉 Single Pass / Direct Placement — exploiting a known fixed structure in the output (even slots vs. odd slots) to avoid extra bookkeeping; a leaner cousin of the "collect then interleave" pattern.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1305,6 +1410,7 @@ class Solution {
 | 13 | Sort Colors | O(n log n) | O(1) | O(n) | O(1) |
 | 14 | Majority Element | O(n) | O(n) | O(n) | O(1) |
 | 15 | Best Time to Buy and Sell Stock | O(n²) | O(1) | O(n) | O(1) |
+| 16 | Rearrange Array Elements by Sign | O(n) | O(n) | O(n) | O(n) |
 
 ---
 
@@ -1319,6 +1425,7 @@ class Solution {
 - **HashMap / Complement Lookup** — Two Sum
 - **Three-Way Partitioning** — Sort Colors (Dutch National Flag)
 - **Boyer-Moore Voting** — Majority Element (candidate/counter cancellation)
+- **Single Pass / Direct Placement** — Rearrange Array Elements by Sign (exploiting known output structure)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
