@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-17-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-18-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -34,6 +34,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 15 | [Best Time to Buy and Sell Stock](#15-best-time-to-buy-and-sell-stock-leetcode-121) | Running Min / Kadane-style |
 | 16 | [Rearrange Array Elements by Sign](#16-rearrange-array-elements-by-sign-leetcode-2149) | Single Pass / Direct Placement |
 | 17 | [Next Permutation](#17-next-permutation-leetcode-31) | In-Place / Pivot & Reverse |
+| 18 | [Set Matrix Zeroes](#18-set-matrix-zeroes-leetcode-73) | Row-Column Encoding / In-Place Marking |
 
 ---
 
@@ -1504,6 +1505,180 @@ class Solution {
 
 ---
 
+## 18. Set Matrix Zeroes (LeetCode 73)
+
+### 🧩 Problem
+Given an `m x n` matrix, if an element is `0`, set its entire row and column to `0` — **in-place**.
+
+```text
+Input:  matrix = [[1,1,1],[1,0,1],[1,1,1]]
+Output: [[1,0,1],[0,0,0],[1,0,1]]
+```
+
+### 💡 Approach 1 — Brute Force (Marker Value, In-Place)
+- You can't zero cells out the moment you see a `0`, because a freshly-zeroed cell would look like an *original* zero to the rest of the scan and cascade incorrectly (zeroing rows/columns that were never actually zero).
+- Fix: whenever `matrix[i][j] == 0`, sweep its entire row and column, but instead of writing `0` directly, write a placeholder value that can't appear in real input (e.g. `Integer.MIN_VALUE`) — leaving the original zero itself untouched so later checks still recognize it correctly.
+- After the full scan, do one more pass converting every placeholder to `0`.
+
+```java
+class Solution {
+    public void setZeroesBrute(int[][] matrix) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        final int MARK = Integer.MIN_VALUE;
+
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (matrix[i][j] == 0) {
+                    for (int k = 0; k < col; k++) {
+                        if (matrix[i][k] != 0) matrix[i][k] = MARK;
+                    }
+                    for (int k = 0; k < row; k++) {
+                        if (matrix[k][j] != 0) matrix[k][j] = MARK;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (matrix[i][j] == MARK) matrix[i][j] = 0;
+            }
+        }
+    }
+}
+```
+- **Time:** O((m×n) × (m+n)) — for every zero found, sweep its whole row + column
+- **Space:** O(1) extra — slow, but no auxiliary data structure
+
+### 💡 Approach 2 — Better (Two Boolean Arrays, O(m+n) Space)
+- First pass: record which rows and which columns contain at least one zero, using two separate boolean arrays — no ambiguity, unlike reusing the matrix itself.
+- Second pass: zero out any cell whose row or column was flagged.
+
+```java
+class Solution {
+    public void setZeroesBetter(int[][] matrix) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        boolean[] zeroRow = new boolean[row];
+        boolean[] zeroCol = new boolean[col];
+
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (matrix[i][j] == 0) {
+                    zeroRow[i] = true;
+                    zeroCol[j] = true;
+                }
+            }
+        }
+
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                if (zeroRow[i] || zeroCol[j]) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+```
+- **Time:** O(m × n)
+- **Space:** O(m + n) — the two boolean arrays
+
+### 💡 Approach 3 — Optimal (Row 0 & Column 0 as Markers, O(1) Space)
+- Instead of allocating separate `boolean[]` arrays, reuse **row 0** and **column 0** of the matrix itself as the marker storage: `matrix[i][0]` says "row i needs zeroing," `matrix[0][j]` says "column j needs zeroing."
+- Problem: `matrix[0][0]` sits at the intersection of row 0 and column 0, so it can only encode one of those two facts. A separate `col0` flag is saved *before* the first pass can overwrite `matrix[i][0]`, specifically to carry "does column 0 need zeroing" — the one bit `matrix[0][0]` can't hold once it gets claimed by row 0's status.
+- First pass: for every cell `matrix[i][j]` (`j` starting at 1, skipping column 0 which is read into `col0` separately), if it's `0`, mark `matrix[i][0] = 0` and `matrix[0][j] = 0`.
+- Second pass: for every interior cell (`i, j >= 1`), zero it if either its row-marker or column-marker is `0`. Traversal direction (forward or backward) doesn't matter here — column 0 and row 0 are never touched inside this loop, so the markers stay intact regardless of order.
+- Finally: zero out row 0 if `matrix[0][0] == 0`, and zero out column 0 if `col0 == 0`.
+
+```java
+class Solution {
+    public void setZeroes(int[][] matrix) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        int col0 = 1;
+
+        for (int i = 0; i < row; i++) {
+            if (matrix[i][0] == 0) {
+                col0 = 0;
+            }
+            for (int j = 1; j < col; j++) {
+                if (matrix[i][j] == 0) {
+                    matrix[i][0] = 0;
+                    matrix[0][j] = 0;
+                }
+            }
+        }
+
+        for (int i = row - 1; i >= 1; i--) {
+            for (int j = col - 1; j >= 1; j--) {
+                if (matrix[i][0] == 0 || matrix[0][j] == 0) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+
+        if (matrix[0][0] == 0) {
+            for (int i = 0; i < col; i++) {
+                matrix[0][i] = 0;
+            }
+        }
+
+        if (col0 == 0) {
+            for (int j = 0; j < row; j++) {
+                matrix[j][0] = 0;
+            }
+        }
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`matrix = [[1,1,1],[1,0,1],[1,1,1]]`
+
+**Pass 1 — mark row0/col0 from interior zeros:**
+
+| i | matrix[i][0] before | col0 | Interior zero found? | Action | State after row i |
+|---|---|---|---|---|---|
+| 0 | 1 | 1 (unchanged) | none | — | `[1,1,1]` / `[1,0,1]` / `[1,1,1]` |
+| 1 | 1 | 1 (unchanged) | `matrix[1][1]=0` | `matrix[1][0]=0`, `matrix[0][1]=0` | `[1,0,1]` / `[0,0,1]` / `[1,1,1]` |
+| 2 | 1 | 1 (unchanged) | none | — | (no change) |
+
+After pass 1: `matrix = [[1,0,1],[0,0,1],[1,1,1]]`, `col0 = 1`
+
+**Pass 2 — fill interior from markers (i: 2→1, j: 2→1):**
+
+| i | j | matrix[i][0] | matrix[0][j] | Zero? | matrix[i][j] after |
+|---|---|---|---|---|---|
+| 2 | 2 | 1 | 1 | No | 1 |
+| 2 | 1 | 1 | 0 | Yes | 0 |
+| 1 | 2 | 0 | 1 | Yes | 0 |
+| 1 | 1 | 0 | 0 | Yes | 0 (already 0) |
+
+After pass 2: `matrix = [[1,0,1],[0,0,0],[1,0,1]]`
+
+**Cleanup:** `matrix[0][0] = 1` → row 0 untouched. `col0 = 1` → column 0 untouched.
+
+**Result:** `[[1,0,1],[0,0,0],[1,0,1]]` ✅ matches expected output.
+
+**Why `col0` is needed:** `matrix[0][0]` can only store one bit of information, but the algorithm needs two — "does row 0 need zeroing" and "does column 0 need zeroing." Row 0's status naturally ends up stored in `matrix[0][0]` (it gets overwritten to `0` automatically whenever the first pass finds a zero anywhere in row 0). Column 0's status has nowhere left to live on the matrix itself, so `col0` captures it as a plain local variable, read *before* the first pass has a chance to touch `matrix[i][0]`.
+
+**Why the reverse traversal in pass 2 is written, but not strictly required:** The inner loops run `i` from `row-1` down to `1` and `j` from `col-1` down to `1` — index `0` is never included in either loop. Since `matrix[i][0]` and `matrix[0][j]` (the markers) are only ever written to when `i==0` or `j==0`, and this loop never sets `i` or `j` to `0`, the markers can never be corrupted mid-loop regardless of which direction you scan. Forward traversal (`i: 1→row-1`, `j: 1→col-1`) produces an identical result here. The backward convention is borrowed from other row/column-marking variants where the loops *do* risk touching a marker cell mid-scan — it's a safe habit, just not a requirement in this exact structure.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Marker Value) | O((m×n)×(m+n)) | O(1) |
+| Better (Two Boolean Arrays) | O(m×n) | O(m+n) |
+| **Row0/Col0 Markers (Optimal)** | **O(m×n)** | **O(1)** |
+
+### 🎯 Pattern
+👉 Row-Column Encoding / In-Place Marking — reusing part of the input structure itself (row 0, column 0) as auxiliary storage to eliminate extra space; the ambiguity at the shared corner cell (`matrix[0][0]`) is a recurring gotcha whenever you try this trick.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1525,6 +1700,7 @@ class Solution {
 | 15 | Best Time to Buy and Sell Stock | O(n²) | O(1) | O(n) | O(1) |
 | 16 | Rearrange Array Elements by Sign | O(n) | O(n) | O(n) | O(n) |
 | 17 | Next Permutation | O(n! × n log n) | O(n! × n) | O(n) | O(1) |
+| 18 | Set Matrix Zeroes | O((m×n)×(m+n)) | O(1) | O(m×n) | O(1) |
 
 ---
 
@@ -1541,6 +1717,7 @@ class Solution {
 - **Boyer-Moore Voting** — Majority Element (candidate/counter cancellation)
 - **Single Pass / Direct Placement** — Rearrange Array Elements by Sign (exploiting known output structure)
 - **In-Place / Pivot & Reverse** — Next Permutation (find pivot, swap, reverse descending suffix)
+- **Row-Column Encoding** — Set Matrix Zeroes (reusing input structure itself as O(1) marker storage)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
