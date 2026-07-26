@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-18-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-19-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -35,6 +35,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 16 | [Rearrange Array Elements by Sign](#16-rearrange-array-elements-by-sign-leetcode-2149) | Single Pass / Direct Placement |
 | 17 | [Next Permutation](#17-next-permutation-leetcode-31) | In-Place / Pivot & Reverse |
 | 18 | [Set Matrix Zeroes](#18-set-matrix-zeroes-leetcode-73) | Row-Column Encoding / In-Place Marking |
+| 19 | [Rotate Image](#19-rotate-image-leetcode-48) | Transpose + Reverse (In-Place Matrix Rotation) |
 
 ---
 
@@ -896,15 +897,6 @@ class Solution {
 
 **Result:** `4` ✅
 
-**Why it works (regrouping via associativity/commutativity):**
-```
-4 ^ 1 ^ 2 ^ 1 ^ 2
-= 4 ^ (1 ^ 1) ^ (2 ^ 2)   // pairs cancel: a ^ a = 0
-= 4 ^ 0 ^ 0
-= 4                        // a ^ 0 = a
-```
-Java evaluates left-to-right, but XOR is order-independent, so the final result always matches this regrouped form regardless of where duplicates sit in the array.
-
 ### ⚙️ Complexity Summary
 
 | Approach | Time | Space |
@@ -1679,6 +1671,114 @@ After pass 2: `matrix = [[1,0,1],[0,0,0],[1,0,1]]`
 
 ---
 
+## 19. Rotate Image (LeetCode 48)
+
+### 🧩 Problem
+Given an `n x n` 2D matrix representing an image, rotate the image by **90 degrees clockwise** — **in-place** (must modify the input matrix directly, `O(1)` extra space, no separate output matrix).
+
+```text
+Input:  matrix = [[1,2,3],[4,5,6],[7,8,9]]
+Output: [[7,4,1],[8,5,2],[9,6,3]]
+```
+
+### 💡 Approach 1 — Brute Force (Extra Matrix)
+- Create a new `n x n` matrix `ans`.
+- For every cell `matrix[i][j]`, place it into its rotated position `ans[j][n-1-i]` — this is the direct coordinate mapping for a 90° clockwise rotation.
+- Copy `ans` back into the original `matrix`, since the problem requires in-place modification of the input reference.
+
+```java
+class Solution {
+    public void rotate(int[][] matrix) {
+        int n = matrix.length;
+        int[][] ans = new int[n][n];
+        // Fill the new matrix
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                ans[j][n - 1 - i] = matrix[i][j];
+            }
+        }
+        // Copy back to original matrix
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                matrix[i][j] = ans[i][j];
+            }
+        }
+    }
+}
+```
+- **Time:** O(n²) — one pass to fill `ans`, one pass to copy back
+- **Space:** O(n²) — the extra `ans` matrix is the whole cost here
+
+### 💡 Approach 2 — Optimal (Transpose + Reverse Rows, In-Place)
+- **Step 1 — Transpose:** swap `matrix[i][j]` with `matrix[j][i]` for every `j > i` (upper triangle only, so each pair is swapped exactly once instead of twice).
+- **Step 2 — Reverse each row:** two-pointer swap from `left = 0` to `right = n-1` on every row.
+- Transpose followed by a horizontal flip is exactly equivalent to a 90° clockwise rotation, and both steps work directly on `matrix` — no auxiliary 2D array needed.
+
+```java
+class Solution {
+    public void rotate(int[][] matrix) {
+        int n = matrix.length;
+
+        // Step 1: Transpose (swap upper triangle across the diagonal)
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = temp;
+            }
+        }
+
+        // Step 2: Reverse every row
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n / 2; j++) {
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[i][n - 1 - j];
+                matrix[i][n - 1 - j] = temp;
+            }
+        }
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`matrix = [[1,2,3],[4,5,6],[7,8,9]]`
+
+**Step 1 — Transpose (upper triangle, `j > i`):**
+
+| i | j | swap | Matrix State |
+|---|---|------|---------------|
+| 0 | 1 | matrix[0][1] ↔ matrix[1][0] (2 ↔ 4) | `[[1,4,3],[2,5,6],[7,8,9]]` |
+| 0 | 2 | matrix[0][2] ↔ matrix[2][0] (3 ↔ 7) | `[[1,4,7],[2,5,6],[3,8,9]]` |
+| 1 | 2 | matrix[1][2] ↔ matrix[2][1] (6 ↔ 8) | `[[1,4,7],[2,5,8],[3,6,9]]` |
+
+After transpose: `[[1,4,7],[2,5,8],[3,6,9]]`
+
+**Step 2 — Reverse each row:**
+
+| Row | Before | After |
+|-----|--------|-------|
+| 0 | `[1,4,7]` | `[7,4,1]` |
+| 1 | `[2,5,8]` | `[8,5,2]` |
+| 2 | `[3,6,9]` | `[9,6,3]` |
+
+**Result:** `[[7,4,1],[8,5,2],[9,6,3]]` ✅ matches expected output.
+
+**Edge case — 1×1 matrix:** `matrix = [[5]]` → transpose loop never runs (`j = i+1` starts past bounds) → reverse loop never runs (`n/2 = 0`) → returns `[[5]]` unchanged, correctly.
+
+**Why transpose must only touch the upper triangle:** Swapping `matrix[i][j]` with `matrix[j][i]` for **every** `i, j` pair (not just `j > i`) would swap each pair once going forward and then swap it *back* when the loop reaches the mirrored indices — undoing the transpose entirely. Restricting `j` to start at `i + 1` guarantees each off-diagonal pair is visited exactly once.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Extra Matrix) | O(n²) | O(n²) |
+| **Transpose + Reverse (Optimal)** | **O(n²)** | **O(1)** |
+
+### 🎯 Pattern
+👉 Transpose + Reverse (In-Place Matrix Rotation) — decomposing a compound transformation (90° rotation) into two simpler, well-known in-place operations (diagonal flip + axis flip); same "decompose into known primitives" instinct as the Reversal Trick used in Rotate Array.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1701,6 +1801,7 @@ After pass 2: `matrix = [[1,0,1],[0,0,0],[1,0,1]]`
 | 16 | Rearrange Array Elements by Sign | O(n) | O(n) | O(n) | O(n) |
 | 17 | Next Permutation | O(n! × n log n) | O(n! × n) | O(n) | O(1) |
 | 18 | Set Matrix Zeroes | O((m×n)×(m+n)) | O(1) | O(m×n) | O(1) |
+| 19 | Rotate Image | O(n²) | O(n²) | O(n²) | O(1) |
 
 ---
 
@@ -1718,6 +1819,7 @@ After pass 2: `matrix = [[1,0,1],[0,0,0],[1,0,1]]`
 - **Single Pass / Direct Placement** — Rearrange Array Elements by Sign (exploiting known output structure)
 - **In-Place / Pivot & Reverse** — Next Permutation (find pivot, swap, reverse descending suffix)
 - **Row-Column Encoding** — Set Matrix Zeroes (reusing input structure itself as O(1) marker storage)
+- **Transpose + Reverse** — Rotate Image (decomposing a rotation into two simpler in-place primitives)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
