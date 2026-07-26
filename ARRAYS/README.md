@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=flat-square&logo=java)
 ![Topic](https://img.shields.io/badge/Topic-Arrays-blue?style=flat-square)
 ![Pattern](https://img.shields.io/badge/Pattern-Two%20Pointer-green?style=flat-square)
-![Problems](https://img.shields.io/badge/Problems-19-purple?style=flat-square)
+![Problems](https://img.shields.io/badge/Problems-20-purple?style=flat-square)
 
 Every problem here is solved with **both** a Brute Force and an Optimal approach, complete with dry runs, complexity analysis, and pattern notes — built for interview prep.
 
@@ -36,6 +36,7 @@ Every problem here is solved with **both** a Brute Force and an Optimal approach
 | 17 | [Next Permutation](#17-next-permutation-leetcode-31) | In-Place / Pivot & Reverse |
 | 18 | [Set Matrix Zeroes](#18-set-matrix-zeroes-leetcode-73) | Row-Column Encoding / In-Place Marking |
 | 19 | [Rotate Image](#19-rotate-image-leetcode-48) | Transpose + Reverse (In-Place Matrix Rotation) |
+| 20 | [Spiral Matrix](#20-spiral-matrix-leetcode-54) | Boundary Simulation / Four Pointers |
 
 ---
 
@@ -1779,6 +1780,138 @@ After transpose: `[[1,4,7],[2,5,8],[3,6,9]]`
 
 ---
 
+## 20. Spiral Matrix (LeetCode 54)
+
+### 🧩 Problem
+Given an `m x n` matrix, return all elements of the matrix in **spiral order** (clockwise, starting from the top-left).
+
+```text
+Input:  matrix = [[1,2,3],[4,5,6],[7,8,9]]
+Output: [1,2,3,6,9,8,7,4,5]
+```
+
+### 💡 Approach 1 — Brute Force (Visited Matrix + Direction Vectors)
+- Keep a `boolean[][] visited` grid the same size as `matrix`.
+- Maintain a current direction (right → down → left → up, cycling in that order) using direction-delta arrays.
+- At each step, try to move in the current direction; if the next cell is out of bounds or already visited, rotate to the next direction instead.
+- Repeat until every cell has been visited.
+
+```java
+class Solution {
+    public List<Integer> spiralOrderBrute(int[][] matrix) {
+        int rows = matrix.length, cols = matrix[0].length;
+        List<Integer> ans = new ArrayList<>();
+        boolean[][] visited = new boolean[rows][cols];
+
+        int[] dRow = {0, 1, 0, -1}; // right, down, left, up
+        int[] dCol = {1, 0, -1, 0};
+
+        int r = 0, c = 0, dir = 0;
+
+        for (int i = 0; i < rows * cols; i++) {
+            ans.add(matrix[r][c]);
+            visited[r][c] = true;
+
+            int nextR = r + dRow[dir];
+            int nextC = c + dCol[dir];
+
+            if (nextR < 0 || nextR >= rows || nextC < 0 || nextC >= cols || visited[nextR][nextC]) {
+                dir = (dir + 1) % 4;
+                nextR = r + dRow[dir];
+                nextC = c + dCol[dir];
+            }
+
+            r = nextR;
+            c = nextC;
+        }
+        return ans;
+    }
+}
+```
+- **Time:** O(rows × cols)
+- **Space:** O(rows × cols) — extra `visited` grid
+
+### 💡 Approach 2 — Optimal (Four Boundary Pointers, In-Place)
+- Maintain four shrinking boundaries: `top`, `bottom`, `left`, `right`.
+- Traverse the current top row left→right, then the current right column top→bottom, then the current bottom row right→left (only if `left <= right` still holds), then the current left column bottom→top (only if `top <= bottom` still holds).
+- After each side, shrink the corresponding boundary inward (`top++`, `right--`, `bottom--`, `left++`).
+- The two `if` guards before the third and fourth sides prevent re-adding elements when the remaining region has collapsed into a single row or single column.
+- Loop while `top <= bottom && left <= right`.
+
+```java
+class Solution {
+    public List<Integer> spiralOrder(int[][] matrix) {
+        List<Integer> ans = new ArrayList<>();
+        int n = matrix.length;      // number of rows
+        int m = matrix[0].length;   // number of columns
+
+        int top = 0;
+        int bottom = n - 1;
+        int right = m - 1;
+        int left = 0;
+
+        while (top <= bottom && left <= right) {
+
+            for (int i = left; i <= right; i++) {
+                ans.add(matrix[top][i]);
+            }
+            top++;
+
+            for (int i = top; i <= bottom; i++) {
+                ans.add(matrix[i][right]);
+            }
+            right--;
+
+            if (left <= right) {
+                for (int i = right; i >= left; i--) {
+                    ans.add(matrix[bottom][i]);
+                }
+            }
+            bottom--;
+
+            if (top <= bottom) {
+                for (int i = bottom; i >= top; i--) {
+                    ans.add(matrix[i][left]);
+                }
+            }
+            left++;
+        }
+
+        return ans;
+    }
+}
+```
+
+### 📝 Dry Run (Optimal)
+`matrix = [[1,2,3],[4,5,6],[7,8,9]]`
+
+| Iteration | top,bottom,left,right (before) | Action | ans (after) | Boundaries (after) |
+|---|---|---|---|---|
+| 1 | 0,2,0,2 | top row left→right: `matrix[0][0..2]` | `[1,2,3]` | top=1 |
+| 1 | 1,2,0,2 | right col top→bottom: `matrix[1..2][2]` | `[1,2,3,6,9]` | right=1 |
+| 1 | 1,2,0,1 | `left<=right` → bottom row right→left: `matrix[2][1..0]` | `[1,2,3,6,9,8,7]` | bottom=1 |
+| 1 | 1,1,0,1 | `top<=bottom` → left col bottom→top: `matrix[1][0]` | `[1,2,3,6,9,8,7,4]` | left=1 |
+| 2 | 1,1,1,1 | top row left→right: `matrix[1][1]` | `[1,2,3,6,9,8,7,4,5]` | top=2 |
+| — | 2,1,1,0 | `top<=bottom` fails → loop ends | — | — |
+
+**Result:** `[1,2,3,6,9,8,7,4,5]` ✅
+
+**Edge case — single row:** `matrix = [[1,2,3,4]]` → `top=0,bottom=0,left=0,right=3`. Top row adds `[1,2,3,4]`, `top` becomes `1`. Right column loop (`i` from `top=1` to `bottom=0`) doesn't execute since `1 > 0`. `right--` → `right=2`. `left<=right` (`0<=2`) is true, but `top<=bottom` (`1<=0`) fails, so the `if(top<=bottom)` guard on the fourth side skips it — bottom row would otherwise re-add the same row already added. Loop condition `top<=bottom` (`1<=0`) now fails → stops correctly.
+
+**Why the two `if` guards matter:** once a boundary crosses (e.g. `bottom` shifts above `top`, or `right` shifts left of `left`), the "row"/"column" being asked for no longer exists as a distinct strip — without the guard, the third and fourth loops would re-traverse cells already added in the first two, duplicating output for matrices that collapse to a single row or column mid-spiral.
+
+### ⚙️ Complexity Summary
+
+| Approach | Time | Space |
+|----------|------|-------|
+| Brute Force (Visited Matrix) | O(rows × cols) | O(rows × cols) |
+| **Four Boundary Pointers (Optimal)** | **O(rows × cols)** | **O(1)** *(excluding output list)* |
+
+### 🎯 Pattern
+👉 Boundary Simulation / Four Pointers — shrinking a rectangular region from all four sides each pass; the same "converge inward" instinct as Two Pointer, but across four independent edges instead of two.
+
+---
+
 ## 📈 Master Complexity Table
 
 | # | Problem | Brute Time | Brute Space | Optimal Time | Optimal Space |
@@ -1802,6 +1935,7 @@ After transpose: `[[1,4,7],[2,5,8],[3,6,9]]`
 | 17 | Next Permutation | O(n! × n log n) | O(n! × n) | O(n) | O(1) |
 | 18 | Set Matrix Zeroes | O((m×n)×(m+n)) | O(1) | O(m×n) | O(1) |
 | 19 | Rotate Image | O(n²) | O(n²) | O(n²) | O(1) |
+| 20 | Spiral Matrix | O(rows×cols) | O(rows×cols) | O(rows×cols) | O(1) |
 
 ---
 
@@ -1820,6 +1954,7 @@ After transpose: `[[1,4,7],[2,5,8],[3,6,9]]`
 - **In-Place / Pivot & Reverse** — Next Permutation (find pivot, swap, reverse descending suffix)
 - **Row-Column Encoding** — Set Matrix Zeroes (reusing input structure itself as O(1) marker storage)
 - **Transpose + Reverse** — Rotate Image (decomposing a rotation into two simpler in-place primitives)
+- **Boundary Simulation / Four Pointers** — Spiral Matrix (shrinking rectangular region from all four sides)
 
 ## 🚀 How to Use
 Each solution is written as a standalone `class Solution` — paste directly into LeetCode, or run locally with a `main` method for quick testing.
