@@ -20,24 +20,26 @@
 
 | # | Section | Description |
 |---|---|---|
-| 1 | [🧠 What is a Linked List?](#-1-what-is-a-linked-list) | Core definition, why it exists |
-| 2 | [⚖️ Array vs Linked List](#-2-array-vs-linked-list) | When to use what |
-| 3 | [🏗️ Node Structure & Declaration](#-3-node-structure--declaration) | Java class setup |
-| 4 | [🚶 Traversal](#-4-traversal) | Walking the list |
-| 5 | [➕ Insertion](#-5-insertion) | Head / Tail / Position |
-| 6 | [➖ Deletion](#-6-deletion) | Head / Tail / Position / By Value |
-| 7 | [✏️ Updation](#-7-updation) | Modify node values |
-| 8 | [🔍 Searching](#-8-searching) | Linear search in SLL |
-| 9 | [🔁 Reversal](#-9-reversal-iterative--recursive) | Iterative & recursive |
-| 10 | [🐢🐇 Slow-Fast Pointer Technique](#-10-slow-fast-pointer-technique) | Middle, cycle detection |
-| 11 | [🎭 Dummy Node Technique](#-11-dummy-node-technique) | Simplify edge cases |
-| 12 | [🌀 Recursion on Linked Lists](#-12-recursion-on-linked-lists) | Recursive mental model |
-| 13 | [📊 Master Complexity Table](#-13-master-complexity-table) | Big-O cheat sheet |
-| 14 | [🏷️ Pattern Tags](#-14-pattern-tags) | Recognize problem types |
-| 15 | [💼 Interview Q&A](#-15-interview-qa) | Theory questions asked in interviews |
-| 16 | [📝 Practice Problems Tracker](#-16-practice-problems-tracker) | Problems to solve next |
+| 1 | [🧠 What is a Linked List?](#what-is-a-linked-list) | Core definition, why it exists |
+| 2 | [⚖️ Array vs Linked List](#array-vs-linked-list) | When to use what |
+| 3 | [🏗️ Node Structure & Declaration](#node-structure-declaration) | Java class setup |
+| 4 | [🚶 Traversal](#traversal) | Walking the list |
+| 5 | [➕ Insertion](#insertion) | Head / Tail / Position |
+| 6 | [➖ Deletion](#deletion) | Head / Tail / Position / By Value |
+| 7 | [✏️ Updation](#updation) | Modify node values |
+| 8 | [🔍 Searching](#searching) | Linear search in SLL |
+| 9 | [🔁 Reversal](#reversal) | Iterative & recursive |
+| 10 | [🐢🐇 Slow-Fast Pointer Technique](#slow-fast-pointer) | Middle, cycle detection |
+| 11 | [🎭 Dummy Node Technique](#dummy-node-technique) | Simplify edge cases |
+| 12 | [🌀 Recursion on Linked Lists](#recursion-on-linked-lists) | Recursive mental model |
+| 13 | [📊 Master Complexity Table](#master-complexity-table) | Big-O cheat sheet |
+| 14 | [🏷️ Pattern Tags](#pattern-tags) | Recognize problem types |
+| 15 | [💼 Interview Q&A](#interview-qa) | Theory questions asked in interviews |
+| 16 | [📝 Practice Problems Tracker](#practice-problems-tracker) | Problems to solve next |
 
 ---
+
+<a id="what-is-a-linked-list"></a>
 
 ## 🧠 1. What is a Linked List?
 
@@ -56,6 +58,8 @@ Each box is a `Node` object living somewhere on the heap. The arrow `•` is a `
 
 ---
 
+<a id="array-vs-linked-list"></a>
+
 ## ⚖️ 2. Array vs Linked List
 
 | Feature | Array | Linked List |
@@ -71,6 +75,8 @@ Each box is a `Node` object living somewhere on the heap. The arrow `•` is a `
 | Cache locality | Excellent | Poor (scattered in memory) |
 
 ---
+
+<a id="node-structure-declaration"></a>
 
 ## 🏗️ 3. Node Structure & Declaration
 
@@ -102,6 +108,8 @@ class LinkedList {
 
 ---
 
+<a id="traversal"></a>
+
 ## 🚶 4. Traversal
 
 ```java
@@ -127,6 +135,8 @@ void printList(Node head) {
 | 4 | null | `10 -> 20 -> 30 -> null` (loop ends) |
 
 ---
+
+<a id="insertion"></a>
 
 ## ➕ 5. Insertion
 
@@ -185,6 +195,8 @@ Node insertAtPosition(Node head, int data, int position) {
 Result: `10 -> 20 -> 25 -> 30 -> null` ✅
 
 ---
+
+<a id="deletion"></a>
 
 ## ➖ 6. Deletion
 
@@ -260,6 +272,8 @@ Node deleteAtPosition(Node head, int position) {
 
 ---
 
+<a id="updation"></a>
+
 ## ✏️ 7. Updation
 
 ```java
@@ -275,6 +289,8 @@ void updateValue(Node head, int position, int newData) {
 Complexity: **O(n)** — must traverse to the target index first (no direct indexing like arrays).
 
 ---
+
+<a id="searching"></a>
 
 ## 🔍 8. Searching
 
@@ -305,6 +321,8 @@ int searchIndex(Node head, int key) {
 ```
 
 ---
+
+<a id="reversal"></a>
 
 ## 🔁 9. Reversal (Iterative & Recursive)
 
@@ -357,6 +375,8 @@ Node reverseRecursive(Node head) {
 
 ---
 
+<a id="slow-fast-pointer"></a>
+
 ## 🐢🐇 10. Slow-Fast Pointer Technique
 
 Used for: finding the **middle**, detecting **cycles**, finding **kth node from end**.
@@ -403,6 +423,8 @@ boolean hasCycle(Node head) {
 
 ---
 
+<a id="dummy-node-technique"></a>
+
 ## 🎭 11. Dummy Node Technique
 
 A **dummy node** is a fake node placed *before* the head, used to avoid writing special-case code for operations that affect the head itself (e.g., "remove Nth node from end", "remove all nodes with value X").
@@ -427,6 +449,8 @@ Node removeElements(Node head, int val) {
 > 💡 Without the dummy node, you'd need an `if (head.data == val)` special case before the loop even starts, because deleting the head is different from deleting any other node (there's no "previous" node to rewire). The dummy node gives every node — including the original head — a predecessor.
 
 ---
+
+<a id="recursion-on-linked-lists"></a>
 
 ## 🌀 12. Recursion on Linked Lists
 
@@ -453,6 +477,8 @@ int lengthRecursive(Node head) {
 
 ---
 
+<a id="master-complexity-table"></a>
+
 ## 📊 13. Master Complexity Table
 
 | Operation | Time (Singly LL) | Space |
@@ -474,6 +500,8 @@ int lengthRecursive(Node head) {
 
 ---
 
+<a id="pattern-tags"></a>
+
 ## 🏷️ 14. Pattern Tags
 
 Use these tags to categorize problems as you add them to this repo:
@@ -481,6 +509,8 @@ Use these tags to categorize problems as you add them to this repo:
 `#traversal` `#two-pointer` `#slow-fast-pointer` `#dummy-node` `#recursion` `#in-place-reversal` `#cycle-detection` `#merge-technique` `#kth-node`
 
 ---
+
+<a id="interview-qa"></a>
 
 ## 💼 15. Interview Q&A
 
@@ -503,6 +533,8 @@ A: O(n) for linked list (must traverse), O(1) for array (direct index formula).
 A: Singly LL uses less memory (one pointer per node) and is simpler; Doubly LL allows O(1) backward traversal and O(1) tail deletion (with a tail pointer) at the cost of an extra pointer per node.
 
 ---
+
+<a id="practice-problems-tracker"></a>
 
 ## 📝 16. Practice Problems Tracker
 
