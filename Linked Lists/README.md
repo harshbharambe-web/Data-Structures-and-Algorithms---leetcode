@@ -2,7 +2,7 @@
 
 # 🔗 Linked List — DSA Mastery Repository
 
-### 📘 Part 1: Singly Linked List (SLL)
+### 📘 Part 1: Singly Linked List (SLL) &nbsp;|&nbsp; Part 2: Doubly Linked List (DLL)
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![DSA](https://img.shields.io/badge/Topic-Data%20Structures-blue?style=for-the-badge&logo=leetcode)
@@ -36,6 +36,24 @@
 | 14 | [🏷️ Pattern Tags](#pattern-tags) | Recognize problem types |
 | 15 | [💼 Interview Q&A](#interview-qa) | Theory questions asked in interviews |
 | 16 | [📝 Practice Problems Tracker](#practice-problems-tracker) | Problems to solve next |
+
+### 📘 Part 2 — Doubly Linked List
+
+| # | Section | Description |
+|---|---|---|
+| 17 | [🧠 What is a Doubly Linked List?](#what-is-a-doubly-linked-list) | Core definition, why it exists |
+| 18 | [⚖️ DLL vs SLL](#dll-vs-sll) | When the extra pointer is worth it |
+| 19 | [🏗️ Node Structure & Declaration](#dll-node-structure-declaration) | Java class setup |
+| 20 | [🚶 Traversal (Forward & Backward)](#dll-traversal) | Walking both directions |
+| 21 | [➕ Insertion](#dll-insertion) | Head / Tail / Position |
+| 22 | [➖ Deletion](#dll-deletion) | Head / Tail / Position / By Value |
+| 23 | [✏️ Updation](#dll-updation) | Modify node values |
+| 24 | [🔍 Searching](#dll-searching) | Linear search in DLL |
+| 25 | [🔁 Reversal](#dll-reversal) | Swap prev/next at every node |
+| 26 | [📊 Master Complexity Table](#dll-master-complexity-table) | Big-O cheat sheet |
+| 27 | [🏷️ Pattern Tags](#dll-pattern-tags) | Recognize problem types |
+| 28 | [💼 Interview Q&A](#dll-interview-qa) | Theory questions asked in interviews |
+| 29 | [📝 Practice Problems Tracker](#dll-practice-problems-tracker) | Problems to solve next |
 
 ---
 
@@ -550,10 +568,427 @@ A: Singly LL uses less memory (one pointer per node) and is simpler; Doubly LL a
 
 ---
 
+<a id="what-is-a-doubly-linked-list"></a>
+
+## 🧠 17. What is a Doubly Linked List?
+
+A **Doubly Linked List (DLL)** is a linked list where each node holds **two references** instead of one — a pointer to the **next** node *and* a pointer to the **previous** node.
+
+```
+null ← [• | 10 | •] ⇄ [• | 20 | •] ⇄ [• | 30 | •] → null
+        prev data next
+```
+
+This means you can walk the list **forwards or backwards**, and — critically — if you already have a reference to *any* node, you can look at its neighbors on both sides without needing to track a separate `prev` pointer during traversal (unlike SLL, where you had to manually track `prev` one step behind `current`).
+
+> 💡 **Why does this exist if SLL already works?**
+> Several operations that are awkward in SLL become trivial in DLL:
+> - Deleting a node when you only have a reference to *that* node (not the head) — no value-copy trick needed, just relink `node.prev` and `node.next` directly.
+> - O(1) deletion from the **tail** if you maintain a `tail` pointer (SLL needs O(n) to find the second-last node).
+> - Traversing backward (e.g., browser history, undo/redo, music player "previous track").
+
+The trade-off: **every node costs extra memory** (one more pointer), and **every insertion/deletion must correctly update two pointers instead of one** — twice the chances of an off-by-one linking bug if you're not careful.
+
+---
+
+<a id="dll-vs-sll"></a>
+
+## ⚖️ 18. DLL vs SLL
+
+| Feature | Singly LL | Doubly LL |
+|---|---|---|
+| Pointers per node | 1 (`next`) | 2 (`prev`, `next`) |
+| Traversal direction | Forward only | Forward & backward |
+| Memory per node | Less | More (extra pointer) |
+| Delete tail (with tail ptr) | O(n) — must find second-last | **O(1)** — `tail.prev` already known |
+| Delete a given node (no head access) | Needs value-copy trick or `prev` tracking | **Direct** — use `node.prev` and `node.next` |
+| Insert before a given node | Needs `prev` tracking during traversal | **Direct** — `node.prev` already available |
+| Implementation complexity | Simpler | More pointer bookkeeping per operation |
+
+> 🎯 **Rule of thumb:** If your problem needs backward traversal, or frequent tail operations, or deletion given only a node reference — DLL is the natural fit. If you just need a simple forward list, SLL is leaner.
+
+---
+
+<a id="dll-node-structure-declaration"></a>
+
+## 🏗️ 19. Node Structure & Declaration
+
+```java
+class Node {
+    int data;
+    Node prev;
+    Node next;
+
+    Node(int data) {
+        this.data = data;
+        this.prev = null;
+        this.next = null;
+    }
+}
+```
+
+The list wrapper typically tracks both ends for efficiency:
+
+```java
+class DoublyLinkedList {
+    Node head;
+    Node tail;   // keeping tail lets you insert/delete at the end in O(1)
+    int size;
+}
+```
+
+> 🧩 **Key mental model:** Every node is aware of both neighbors. `head.prev` is always `null`, and `tail.next` is always `null` — these are your two boundary checks in almost every operation.
+
+---
+
+<a id="dll-traversal"></a>
+
+## 🚶 20. Traversal (Forward & Backward)
+
+**Forward traversal** (identical logic to SLL):
+
+```java
+void printForward(Node head) {
+    Node current = head;
+    while (current != null) {
+        System.out.print(current.data + " ⇄ ");
+        current = current.next;
+    }
+    System.out.println("null");
+}
+```
+
+**Backward traversal** (only possible because of `prev`):
+
+```java
+void printBackward(Node tail) {
+    Node current = tail;
+    while (current != null) {
+        System.out.print(current.data + " ⇄ ");
+        current = current.prev;
+    }
+    System.out.println("null");
+}
+```
+
+**Dry Run** — list `10 ⇄ 20 ⇄ 30`, printing backward starting from `tail` (node `30`):
+
+| Step | current | Output so far |
+|---|---|---|
+| 1 | 30 | `30 ⇄` |
+| 2 | 20 | `30 ⇄ 20 ⇄` |
+| 3 | 10 | `30 ⇄ 20 ⇄ 10 ⇄` |
+| 4 | null | `30 ⇄ 20 ⇄ 10 ⇄ null` (loop ends) |
+
+---
+
+<a id="dll-insertion"></a>
+
+## ➕ 21. Insertion
+
+### a) Insert at Head — O(1)
+
+```java
+Node insertAtHead(DoublyLinkedList list, int data) {
+    Node newNode = new Node(data);
+    newNode.next = list.head;
+
+    if (list.head != null) {
+        list.head.prev = newNode;
+    } else {
+        list.tail = newNode;   // list was empty, new node is also the tail
+    }
+
+    list.head = newNode;
+    return list.head;
+}
+```
+
+### b) Insert at Tail — O(1) with a tail pointer
+
+```java
+Node insertAtTail(DoublyLinkedList list, int data) {
+    Node newNode = new Node(data);
+    newNode.prev = list.tail;
+
+    if (list.tail != null) {
+        list.tail.next = newNode;
+    } else {
+        list.head = newNode;   // list was empty, new node is also the head
+    }
+
+    list.tail = newNode;
+    return list.tail;
+}
+```
+
+> 💡 Notice this is **O(1)** — unlike SLL, where inserting at tail without a tail pointer required walking the whole list. That's because `list.tail` already points straight to the last node.
+
+### c) Insert at a Given Position (0-indexed) — O(k)
+
+```java
+void insertAtPosition(DoublyLinkedList list, int data, int position) {
+    if (position == 0) { insertAtHead(list, data); return; }
+
+    Node current = list.head;
+    for (int i = 0; i < position - 1; i++) {
+        current = current.next;   // stop at node BEFORE target position
+    }
+
+    if (current.next == null) { insertAtTail(list, data); return; }
+
+    Node newNode = new Node(data);
+    newNode.next = current.next;
+    newNode.prev = current;
+    current.next.prev = newNode;
+    current.next = newNode;
+}
+```
+
+**Dry Run** — insert `25` at position `2` into `10 ⇄ 20 ⇄ 30`:
+
+| Step | current | Action |
+|---|---|---|
+| Start | 10 (index 0) | loop runs `position - 1 = 1` time |
+| i=0 | move to 20 (index 1) | loop ends, `current = 20` |
+| Link 1 | — | `newNode.next = current.next` → `25.next = 30` |
+| Link 2 | — | `newNode.prev = current` → `25.prev = 20` |
+| Link 3 | — | `current.next.prev = newNode` → `30.prev = 25` |
+| Link 4 | — | `current.next = newNode` → `20.next = 25` |
+
+Result: `10 ⇄ 20 ⇄ 25 ⇄ 30 ⇄ null` (and `null ⇄ 10 ⇄ 20 ⇄ 25 ⇄ 30` going backward) ✅
+
+> ⚠️ **Order of the 4 links matters.** Notice `current.next.prev = newNode` happens *before* `current.next = newNode` overwrites it — if you flipped that order, you'd lose the reference to node `30` before finishing the relink.
+
+---
+
+<a id="dll-deletion"></a>
+
+## ➖ 22. Deletion
+
+### a) Delete Head — O(1)
+
+```java
+void deleteHead(DoublyLinkedList list) {
+    if (list.head == null) return;
+
+    list.head = list.head.next;
+
+    if (list.head != null) {
+        list.head.prev = null;
+    } else {
+        list.tail = null;   // list is now empty
+    }
+}
+```
+
+### b) Delete Tail — O(1) ⚡ (this is the big win over SLL)
+
+```java
+void deleteTail(DoublyLinkedList list) {
+    if (list.tail == null) return;
+
+    list.tail = list.tail.prev;
+
+    if (list.tail != null) {
+        list.tail.next = null;
+    } else {
+        list.head = null;   // list is now empty
+    }
+}
+```
+
+Compare this to SLL's `deleteAtTail`, which needed a full O(n) walk to find the second-last node. Here, `list.tail.prev` gives it to you instantly.
+
+### c) Delete a Given Node Directly (no head/traversal needed) — O(1)
+
+```java
+void deleteNode(DoublyLinkedList list, Node node) {
+    if (node.prev != null) {
+        node.prev.next = node.next;
+    } else {
+        list.head = node.next;   // node was the head
+    }
+
+    if (node.next != null) {
+        node.next.prev = node.prev;
+    } else {
+        list.tail = node.prev;   // node was the tail
+    }
+}
+```
+
+> 🎯 This is the DLL answer to LC 237 ("Delete Node in a Linked List") — except here you don't need the value-copy trick at all, because `node.prev` gives you direct access to relink around it, in either direction.
+
+### d) Delete by Value — O(n) to find, O(1) to unlink
+
+```java
+void deleteByValue(DoublyLinkedList list, int value) {
+    Node current = list.head;
+    while (current != null && current.data != value) {
+        current = current.next;
+    }
+    if (current == null) return;   // not found
+    deleteNode(list, current);      // reuse the O(1) unlink logic above
+}
+```
+
+**Dry Run** — delete node `20` from `10 ⇄ 20 ⇄ 30`:
+
+| Step | Check | Action |
+|---|---|---|
+| 1 | `node.prev` (10) is not null | `node.prev.next = node.next` → `10.next = 30` |
+| 2 | `node.next` (30) is not null | `node.next.prev = node.prev` → `30.prev = 10` |
+
+Result: `10 ⇄ 30 ⇄ null` ✅ — two pointer updates, no traversal needed once you're at the node.
+
+---
+
+<a id="dll-updation"></a>
+
+## ✏️ 23. Updation
+
+```java
+void updateValue(DoublyLinkedList list, int position, int newData) {
+    Node current = list.head;
+    for (int i = 0; i < position; i++) {
+        current = current.next;
+    }
+    current.data = newData;
+}
+```
+
+Same as SLL — O(n) to reach the position, O(1) to change the value once there.
+
+---
+
+<a id="dll-searching"></a>
+
+## 🔍 24. Searching
+
+```java
+boolean search(DoublyLinkedList list, int key) {
+    Node current = list.head;
+    while (current != null) {
+        if (current.data == key) return true;
+        current = current.next;
+    }
+    return false;
+}
+```
+
+> 💡 A DLL doesn't make searching faster (still O(n) — no shortcuts through the middle), but it does let you search from **either end simultaneously** (two pointers, one from `head`, one from `tail`, moving toward each other) if you know roughly where the value might be — useful in some palindrome-style problems.
+
+---
+
+<a id="dll-reversal"></a>
+
+## 🔁 25. Reversal
+
+Reversing a DLL is actually **simpler** than SLL in one sense: you don't need a separate `prev` tracking variable across iterations — you just **swap each node's own `prev` and `next`** as you visit it.
+
+```java
+Node reverse(DoublyLinkedList list) {
+    Node current = list.head;
+    Node temp = null;
+
+    while (current != null) {
+        temp = current.prev;
+        current.prev = current.next;
+        current.next = temp;
+        current = current.prev;   // move to what was originally 'next'
+    }
+
+    if (temp != null) {
+        list.head = temp.prev;
+    }
+    return list.head;
+}
+```
+
+**Dry Run** — reverse `10 ⇄ 20 ⇄ 30`:
+
+| Step | current (before swap) | current.prev after swap | current.next after swap | current moves to |
+|---|---|---|---|---|
+| 1 | 10 (prev=null, next=20) | 20 | null | 20 (old next) |
+| 2 | 20 (prev=null, next=30) | 30 | 10 | 30 (old next) |
+| 3 | 30 (prev=null, next=... wait, see note) | — | — | — |
+
+> 📝 Note: at each step we swap `current.prev` and `current.next` for *that node*, then advance using the node's **new** `.prev` (which holds what used to be `.next`). After all three nodes are swapped, `list.head` is updated to the old tail. Final result: `30 ⇄ 20 ⇄ 10 ⇄ null` ✅ — walk through this one on paper node-by-node; it's the kind of dry run that really should be hand-traced rather than just read.
+
+---
+
+<a id="dll-master-complexity-table"></a>
+
+## 📊 26. Master Complexity Table
+
+| Operation | Time (Doubly LL) | Space | vs Singly LL |
+|---|---|---|---|
+| Traversal (either direction) | O(n) | O(1) | Same |
+| Search by value | O(n) | O(1) | Same |
+| Insert at head | O(1) | O(1) | Same |
+| Insert at tail (with tail ptr) | **O(1)** | O(1) | Same (SLL needs tail ptr too for this) |
+| Insert at position k | O(k) | O(1) | Same |
+| Delete head | O(1) | O(1) | Same |
+| Delete tail (with tail ptr) | **O(1)** | O(1) | **Faster** — SLL is O(n) here |
+| Delete given node directly | **O(1)** | O(1) | **Faster** — SLL needs value-copy trick or prev tracking |
+| Delete by value | O(n) to find + O(1) unlink | O(1) | Same find cost, cheaper unlink |
+| Update value at position | O(n) | O(1) | Same |
+| Reverse | O(n) | O(1) | Same |
+| Memory per node | — | 1 extra pointer | **More** than SLL |
+
+---
+
+<a id="dll-pattern-tags"></a>
+
+## 🏷️ 27. Pattern Tags
+
+`#two-pointer-both-ends` `#direct-node-deletion` `#o1-tail-operations` `#prev-next-swap-reversal` `#backward-traversal` `#lru-cache-building-block`
+
+> 🎯 **Recognize this pattern:** Any problem mentioning "browser history," "undo/redo," "LRU cache," "music playlist previous/next," or needing O(1) deletion **given only a node reference** — DLL is very likely the underlying structure.
+
+---
+
+<a id="dll-interview-qa"></a>
+
+## 💼 28. Interview Q&A
+
+**Q1: Why would you choose a DLL over an SLL despite the extra memory cost?**
+A: When you need backward traversal, O(1) tail deletion, or O(1) deletion of a node given only its reference (no head access) — all of which require O(n) work-arounds or tricks in a Singly Linked List.
+
+**Q2: What are the two boundary conditions you must always check in DLL operations?**
+A: Whether `node.prev` is `null` (node is the head) and whether `node.next` is `null` (node is the tail) — both change which list-level pointer (`head`/`tail`) needs updating.
+
+**Q3: Is reversing a DLL asymptotically faster than reversing an SLL?**
+A: No — both are O(n) time, O(1) space. DLL reversal just avoids needing a separate `prev`-tracking variable across the loop, since each node already stores its own `prev`.
+
+**Q4: What's a real-world data structure commonly built using a DLL?**
+A: An LRU (Least Recently Used) Cache — combines a DLL (for O(1) reordering/eviction) with a HashMap (for O(1) key lookup).
+
+**Q5: What's the memory trade-off of DLL vs SLL?**
+A: DLL stores one extra pointer (`prev`) per node, so for very large lists with memory constraints, SLL may be preferable if backward traversal and O(1) tail deletion aren't needed.
+
+---
+
+<a id="dll-practice-problems-tracker"></a>
+
+## 📝 29. Practice Problems Tracker
+
+| # | Problem | Status | Pattern |
+|---|---|---|---|
+| 1 | Implement DLL (insert/delete/search/print both directions) | ⬜ | `#traversal` |
+| 2 | Reverse a Doubly Linked List | ⬜ | `#prev-next-swap-reversal` |
+| 3 | Design Browser History | ⬜ | `#backward-traversal` |
+| 4 | Design a Most Recently Used Queue | ⬜ | `#direct-node-deletion` |
+| 5 | LRU Cache | ⬜ | `#lru-cache-building-block` |
+| 6 | Flatten a Multilevel Doubly Linked List | ⬜ | `#two-pointer-both-ends` |
+| 7 | Palindrome Check using DLL (two-pointer from both ends) | ⬜ | `#two-pointer-both-ends` |
+
+---
+
 <div align="center">
 
-### 🚧 Part 2: Doubly Linked List — coming next 🚧
-
-⭐ Keep this repo updated after every problem — brute force, optimal, dry run, complexity, pattern tag.
+### ✅ Part 1 (SLL) and Part 2 (DLL) theory complete
+### 🔄 Keep this repo updated after every problem — brute force, optimal, dry run, complexity, pattern tag
 
 </div>
