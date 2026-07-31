@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-2-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-3-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -19,6 +19,7 @@
 |---|---|---|---|---|
 | 1 | [Delete Node in a Linked List](#1-delete-node-in-a-linked-list) | 🟢 Easy | `#value-copy-trick` | ✅ Solved |
 | 2 | [Middle of the Linked List](#2-middle-of-the-linked-list) | 🟢 Easy | `#slow-fast-pointers` | ✅ Solved |
+| 3 | [Reverse Linked List](#3-reverse-linked-list) | 🟢 Easy | `#three-pointer-reversal` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
