@@ -265,6 +265,138 @@ Both are O(n) time asymptotically, but the optimal approach does it in **one tra
 > 🎯 **When to recognize this pattern:** Any time a problem needs you to find a midpoint, detect a cycle, or find something "n steps from the end" in a linked list *without knowing the length upfront* — think: *can two pointers moving at different speeds get me there in one pass?*
 
 ---
+<a id="3-reverse-linked-list"></a>
+## 3. Reverse Linked List
+
+**LeetCode 206 — Easy**
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list, **reverse the list**, and return the new head.
+
+**Example 1:**
+```
+Input: head = [1,2,3,4,5]
+Output: [5,4,3,2,1]
+```
+
+**Example 2:**
+```
+Input: head = [1,2]
+Output: [2,1]
+```
+
+**Example 3:**
+```
+Input: head = []
+Output: []
+```
+
+**Constraints:**
+- The number of nodes in the list is in the range `[0, 5000]`
+- `-5000 <= Node.val <= 5000`
+
+### 🧠 Key Insight
+
+A linked list only knows how to point **forward** (`next`). Reversing it means every node's `next` must now point **backward**, to the node that used to come before it. The tricky part is that the moment you flip `current.next` to point backward, you **lose the only path forward** to the rest of the list — so you must save "what's next" *before* you break the link.
+
+### 🐌 Brute Force — Store Values, Then Overwrite
+
+**Approach:** Traverse the list once and store every node's value into an `ArrayList` (or array). Then traverse the list a second time from `head`, overwriting each node's `val` with values taken from the **end** of the stored list backward to the start. This reverses the data without touching a single `next` pointer.
+
+```java
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        // Pass 1: collect all values
+        List<Integer> values = new ArrayList<>();
+        ListNode temp = head;
+        while (temp != null) {
+            values.add(temp.val);
+            temp = temp.next;
+        }
+
+        // Pass 2: overwrite node values in reverse order
+        ListNode curr = head;
+        int i = values.size() - 1;
+        while (curr != null) {
+            curr.val = values.get(i);
+            i--;
+            curr = curr.next;
+        }
+
+        return head;
+    }
+}
+```
+
+**Downside:** Uses an extra `ArrayList` of size `n`, so it costs O(n) **space** on top of the two O(n) passes. It also only *simulates* reversal by rewriting data — the actual node objects and their `next` links never change, which defeats the point if the interviewer wants a true structural reversal (e.g., if other references to the original nodes exist elsewhere, they'd still show the old order).
+
+### ✅ Optimal Solution — Iterative Three-Pointer Reversal
+
+```java
+class Solution {
+    public ListNode reverseList(ListNode head) {
+        ListNode current = head;
+        ListNode prev = null;
+        ListNode next = null;
+
+        while (current != null) {
+
+            next = current.next;
+            current.next = prev;
+            prev = current;
+            current = next;
+
+        }
+        return prev;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`ListNode current = head; ListNode prev = null; ListNode next = null;`** — Three pointers: `prev` trails behind (starts at `null` since the new tail's `next` must eventually be `null`), `current` is the node being processed, `next` is a temporary parking spot so we don't lose the rest of the list.
+2. **`next = current.next;`** — **Save the forward path first**, before it gets overwritten. This is the step that makes the whole thing possible.
+3. **`current.next = prev;`** — **Flip the pointer.** `current` now points backward to `prev` instead of forward.
+4. **`prev = current;`** — Advance `prev` up to where `current` is now, ready for the next node.
+5. **`current = next;`** — Advance `current` to the node we saved in step 2, since `current.next` no longer points there.
+6. **`return prev;`** — When `current` becomes `null`, `prev` is sitting on what used to be the **last** node — now the new head.
+
+### 🧪 Dry Run
+
+Given list: `1 -> 2 -> 3 -> null`
+
+| Iteration | `current` (before) | `next = current.next` | `current.next = prev` | `prev` (after) | `current` (after) |
+|---|---|---|---|---|---|
+| Start | — | — | — | `null` | `1` |
+| 1 | `1` | `2` | `1.next = null` | `1` | `2` |
+| 2 | `2` | `3` | `2.next = 1` | `2` | `3` |
+| 3 | `3` | `null` | `3.next = 2` | `3` | `null` |
+| End (`current == null`) | — | — | — | **`3`** | — |
+
+**List state after each iteration** (reading from `prev` backward shows the reversed chain building up):
+- After iter 1: `1 -> null` (an isolated, correctly-terminated node)
+- After iter 2: `2 -> 1 -> null`
+- After iter 3: `3 -> 2 -> 1 -> null` ✅
+
+**Result:** `return prev` → returns node `3`, and following `.next` gives `3 -> 2 -> 1 -> null`, matching the expected reversed output exactly.
+
+> ⚠️ **Edge case — empty list:** If `head` is `null`, `current` starts as `null`, the `while` condition is immediately false, and the function returns `prev`, which is still `null`. Correct — an empty list reversed is still empty.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (store + overwrite) | O(n) | O(n) | Extra `ArrayList` holds all `n` values |
+| Optimal (three-pointer in-place) | O(n) | O(1) | Only three pointer variables, no matter how long the list is; reverses actual `next` links, not just data |
+
+### 🏷️ Pattern Tag
+
+`#three-pointer-reversal` `#in-place-reversal` `#linked-list-fundamentals`
+
+> 🎯 **When to recognize this pattern:** Any time a problem asks you to reverse a linked list (fully or in a range/sublist), think: *prev, current, next* — save the forward link before you break it, flip the pointer, then shift all three pointers one step ahead. This exact three-pointer skeleton reappears in "Reverse Linked List II," "Reverse Nodes in k-Group," and palindrome-checking problems.
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
@@ -272,6 +404,7 @@ Both are O(n) time asymptotically, but the optimal approach does it in **one tra
 |---|---|---|---|---|
 | 1 | Delete Node in a Linked List | O(1) | O(1) | `#value-copy-trick` |
 | 2 | Middle of the Linked List | O(n) | O(1) | `#slow-fast-pointers` |
+| 3 | Reverse Linked List | O(n) | O(1) | `#three-pointer-reversal` |
 
 ---
 
