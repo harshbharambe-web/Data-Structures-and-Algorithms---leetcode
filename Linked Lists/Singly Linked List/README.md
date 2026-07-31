@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-1-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-2-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -18,6 +18,7 @@
 | # | Problem | Difficulty | Pattern | Status |
 |---|---|---|---|---|
 | 1 | [Delete Node in a Linked List](#1-delete-node-in-a-linked-list) | 🟢 Easy | `#value-copy-trick` | ✅ Solved |
+| 2 | [Middle of the Linked List](#2-middle-of-the-linked-list) | 🟢 Easy | `#slow-fast-pointers` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
@@ -109,12 +110,167 @@ Given list: `4 -> 5 -> 1 -> 9 -> null`, and `node` is a reference to the node ho
 > 🎯 **When to recognize this pattern:** Any time a problem gives you a node reference **without head/previous access** and asks you to "delete" or "remove" it — think: *can I fake the deletion by copying the next node's data forward instead of unlinking backward?*
 
 ---
+<a id="2-middle-of-the-linked-list"></a>
+## 2. Middle of the Linked List
+
+**LeetCode 876 — Easy**
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list, return the **middle node** of the linked list.
+
+If there are **two middle nodes**, return the **second middle node**.
+
+**Example 1:**
+```
+Input: head = [1,2,3,4,5]
+Output: [3,4,5]
+Explanation: The middle node of the list is node 3.
+```
+
+**Example 2:**
+```
+Input: head = [1,2,3,4,5,6]
+Output: [4,5,6]
+Explanation: There are two middle nodes (3 and 4), so we return the second one.
+```
+
+**Constraints:**
+- The number of nodes in the list is in the range `[1, 100]`
+- `1 <= Node.val <= 100`
+
+### 🧠 Key Insight
+
+The obvious way to find "the middle" is to first find out **how long the list is**, then walk halfway. That means touching the list twice. The clever way is to use **two pointers moving at different speeds** so that by the time the fast one finishes the list, the slow one is sitting exactly at the middle — all in a **single pass**.
+
+### 🐌 Brute Force — Count Then Traverse
+
+**Approach:** Traverse the list once to count the total number of nodes `n`. Then traverse again from `head` for `n / 2` steps (integer division), landing on the middle (or second-middle, for even-length lists).
+
+```java
+class Solution {
+    public ListNode middleNode(ListNode head) {
+        // Pass 1: count total nodes
+        int n = 0;
+        ListNode temp = head;
+        while (temp != null) {
+            n++;
+            temp = temp.next;
+        }
+
+        // Pass 2: walk n/2 steps from head
+        ListNode mid = head;
+        for (int i = 0; i < n / 2; i++) {
+            mid = mid.next;
+        }
+
+        return mid;
+    }
+}
+```
+
+**Why `n / 2` lands on the correct (second) middle:** For `n = 5` (odd), `n/2 = 2` → starting at index 0, two hops lands on index 2, which is the single middle. For `n = 6` (even), `n/2 = 3` → three hops lands on index 3, which is the **second** of the two middle nodes (indices 2 and 3). Integer division naturally rounds the right way here — no extra `if` needed.
+
+**Downside:** Two full passes over the list. Also needs a variable to hold the count, and conceptually you're touching every node twice, which is wasted work once you realize you can do it in one pass.
+
+### ✅ Optimal Solution — Slow & Fast Pointers (Tortoise and Hare)
+
+```java
+class Solution {
+    public ListNode middleNode(ListNode head) {
+
+        ListNode slow = head;
+        ListNode fast = head;
+
+        while (fast != null && fast.next != null) {
+            fast = fast.next.next;
+            slow = slow.next;
+        }
+
+        return slow;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`slow = head; fast = head;`** — Both pointers start at the same place.
+2. **`while (fast != null && fast.next != null)`** — Keep going only while it's *safe* to move `fast` two steps forward. (Full justification for `&&` below.)
+3. **`fast = fast.next.next;`** — `fast` moves **two** steps per iteration.
+4. **`slow = slow.next;`** — `slow` moves **one** step per iteration.
+5. **`return slow;`** — When `fast` runs out of road, `slow` has covered exactly half the distance — it's at the middle.
+
+The core idea: if `fast` moves twice as fast as `slow`, then whenever `fast` reaches the end, `slow` is at the halfway point. It's the same principle as two runners on a track where one runner is exactly twice as fast — when the fast one finishes a lap, the slow one is exactly at the midpoint.
+
+### 🧪 Dry Run
+
+**Case A — Odd length:** `1 -> 2 -> 3 -> 4 -> 5 -> null`
+
+| Iteration | `fast` before check | Condition (`fast!=null && fast.next!=null`) | `fast` after move | `slow` after move |
+|---|---|---|---|---|
+| Start | — | — | `1` | `1` |
+| 1 | `1` | `1≠null` ✅ and `1.next(2)≠null` ✅ → enter loop | `3` | `2` |
+| 2 | `3` | `3≠null` ✅ and `3.next(4)≠null` ✅ → enter loop | `5` | `3` |
+| 3 | `5` | `5≠null` ✅ but `5.next = null` ❌ → **loop stops** | — | `3` |
+
+**Result:** `slow = 3` → returns `[3,4,5]` ✅
+
+**Case B — Even length:** `1 -> 2 -> 3 -> 4 -> 5 -> 6 -> null`
+
+| Iteration | `fast` before check | Condition | `fast` after move | `slow` after move |
+|---|---|---|---|---|
+| Start | — | — | `1` | `1` |
+| 1 | `1` | both non-null ✅ | `3` | `2` |
+| 2 | `3` | both non-null ✅ | `5` | `3` |
+| 3 | `5` | `5≠null` ✅ but `5.next(6)≠null` ✅ → enter loop | `null` (5.next.next) | `4` |
+| 4 | `null` | `fast≠null` ❌ → **loop stops immediately** | — | `4` |
+
+**Result:** `slow = 4` → returns `[4,5,6]` ✅ (correctly the **second** middle node)
+
+### ⚖️ Why `&&` and Not `||` in the Optimal Approach
+
+This is the crux of getting the loop condition right, for two separate reasons — one about **correctness**, one about **safety**:
+
+**1. Correctness — what the condition is actually supposed to mean**
+
+Each iteration needs to move `fast` **two full steps** (`fast.next.next`). That's only a valid operation if **both** `fast` and `fast.next` are non-null. So the loop should keep running only while it is safe to take two steps — which is exactly what `&&` expresses: *"continue only if condition 1 AND condition 2 both hold."*
+
+If `||` were used instead (`fast != null || fast.next != null`), the loop would try to continue as long as **at least one** of those is true — which is the wrong logical statement. We don't want "at least one is fine," we want "both are fine," because the very next line depends on both being non-null simultaneously.
+
+**2. Safety — avoiding a `NullPointerException`**
+
+Java evaluates `&&` and `||` with **short-circuit evaluation**, and the order of evaluation matters here:
+
+- With `fast != null && fast.next != null`: if `fast` is `null`, the first operand is `false`, and because of `&&`'s short-circuiting, `fast.next` is **never evaluated at all** — the loop just exits safely.
+- With `fast != null || fast.next != null`: if `fast` is `null`, the first operand is `false`, but `||` needs to check the **second** operand to decide the result — so it evaluates `fast.next`. Since `fast` is `null`, this throws a `NullPointerException` on the spot.
+
+In a natural run of this algorithm (e.g., the even-length case above), `fast` genuinely does become `null` at some point. So `||` isn't just "logically looser" — it would **crash the program** the moment that happens.
+
+**In short:** `&&` is required both because the semantics call for "both must be safe" rather than "either one is fine," and because its short-circuit behavior is exactly what prevents the null-pointer crash that `||` would cause.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (count + traverse) | O(n) | O(1) | Two full passes over `n` nodes, but no extra structures |
+| Optimal (slow/fast pointers) | O(n) | O(1) | Single pass — `fast` covers the list in ~`n/2` iterations |
+
+Both are O(n) time asymptotically, but the optimal approach does it in **one traversal instead of two**, and generalizes to a pattern (slow/fast pointers) that reappears constantly in linked list problems — cycle detection, finding the k-th node from the end, palindrome checks, and more.
+
+### 🏷️ Pattern Tag
+
+`#slow-fast-pointers` `#tortoise-and-hare` `#single-pass`
+
+> 🎯 **When to recognize this pattern:** Any time a problem needs you to find a midpoint, detect a cycle, or find something "n steps from the end" in a linked list *without knowing the length upfront* — think: *can two pointers moving at different speeds get me there in one pass?*
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
 | # | Problem | Time | Space | Pattern |
 |---|---|---|---|---|
 | 1 | Delete Node in a Linked List | O(1) | O(1) | `#value-copy-trick` |
+| 2 | Middle of the Linked List | O(n) | O(1) | `#slow-fast-pointers` |
 
 ---
 
