@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-3-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-4-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -20,6 +20,7 @@
 | 1 | [Delete Node in a Linked List](#1-delete-node-in-a-linked-list) | 🟢 Easy | `#value-copy-trick` | ✅ Solved |
 | 2 | [Middle of the Linked List](#2-middle-of-the-linked-list) | 🟢 Easy | `#slow-fast-pointers` | ✅ Solved |
 | 3 | [Reverse Linked List](#3-reverse-linked-list) | 🟢 Easy | `#three-pointer-reversal` | ✅ Solved |
+| 4 | [Linked List Cycle](#4-linked-list-cycle) | 🟢 Easy | `#slow-fast-pointers` `#floyds-cycle-detection` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
@@ -397,6 +398,157 @@ Given list: `1 -> 2 -> 3 -> null`
 > 🎯 **When to recognize this pattern:** Any time a problem asks you to reverse a linked list (fully or in a range/sublist), think: *prev, current, next* — save the forward link before you break it, flip the pointer, then shift all three pointers one step ahead. This exact three-pointer skeleton reappears in "Reverse Linked List II," "Reverse Nodes in k-Group," and palindrome-checking problems.
 
 ---
+<a id="4-linked-list-cycle"></a>
+## 4. Linked List Cycle
+
+**LeetCode 141 — Easy**
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list, determine if the list has a **cycle** in it — i.e., some node's `next` pointer loops back to a previous node instead of eventually reaching `null`.
+
+Return `true` if there is a cycle, `false` otherwise.
+
+**Example 1:**
+```
+Input: head = [3,2,0,-4], pos = 1
+Output: true
+Explanation: The tail's next points to the node at index 1 (value 2), forming a cycle.
+```
+
+**Example 2:**
+```
+Input: head = [1,2], pos = 0
+Output: true
+Explanation: The tail connects back to the head, forming a cycle.
+```
+
+**Example 3:**
+```
+Input: head = [1], pos = -1
+Output: false
+Explanation: There is no cycle — the tail's next is null.
+```
+
+**Constraints:**
+- The number of nodes in the list is in the range `[0, 10^4]`
+- `-10^5 <= Node.val <= 10^5`
+- `pos` is `-1` (no cycle) or a valid index representing where the tail connects to, forming a cycle
+
+### 🧠 Key Insight
+
+Since a cycle means you can never reach `null` by normal traversal, `fast != null && fast.next != null` alone can't be the *only* way to detect it — a looping list will make that condition true forever. You need a way to notice *"I've been here before"* without necessarily storing every node.
+
+Two ways to catch a repeat visit:
+1. **Remember every node you've seen** (HashSet) — if you land on a node already in the set, that's a cycle.
+2. **Use two pointers at different speeds** (slow/fast) — if a cycle exists, the faster pointer will eventually **lap** the slower one and they'll land on the exact same node. If there's no cycle, `fast` simply reaches `null` first, same as in the "Middle of Linked List" problem.
+
+This is the same **Tortoise and Hare** engine from problem #2, repurposed: there the stopping condition was "fast hits the end," here the stopping condition is "fast catches up to slow."
+
+### 🐌 Brute Force — HashSet of Visited Nodes
+
+**Approach:** Walk the list one node at a time. Before moving to the next node, check if the current node has already been seen (stored by reference, not value, since values can repeat). If it has, a cycle exists. If traversal reaches `null`, there's no cycle.
+
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+public class Solution {
+    public boolean hasCycle(ListNode head) {
+        Set<ListNode> visited = new HashSet<>();
+        ListNode current = head;
+
+        while (current != null) {
+            if (visited.contains(current)) {
+                return true;
+            }
+            visited.add(current);
+            current = current.next;
+        }
+
+        return false;
+    }
+}
+```
+
+**Why store the node object, not `node.val`:** Values can repeat in a valid, cycle-free list (constraints don't guarantee uniqueness). Only the node's **identity** (memory reference) reliably tells you "I've already stood on this exact node."
+
+**Downside:** Needs O(n) extra space for the HashSet in the worst case (no cycle, full traversal of all n nodes) — you're paying memory proportional to list length just to detect a loop.
+
+### ✅ Optimal Solution — Floyd's Cycle Detection (Slow & Fast Pointers)
+
+```java
+public class Solution {
+    public boolean hasCycle(ListNode head) {
+        ListNode slow = head;
+        ListNode fast = head;
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+            if (slow == fast) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`slow = head; fast = head;`** — Both start together, same as the middle-of-list problem.
+2. **`while (fast != null && fast.next != null)`** — Same safety guard as before: only continue if it's safe to move `fast` two steps. If there's no cycle, this naturally becomes false once `fast` runs off the end.
+3. **`slow = slow.next; fast = fast.next.next;`** — `slow` takes 1 step, `fast` takes 2.
+4. **`if (slow == fast) return true;`** — Reference comparison (not `.equals()`), checking if both pointers have converged onto the **same node object**. This can only happen if a cycle exists — a `null`-terminated list never lets fast/slow occupy the same node.
+5. **`return false;`** — Loop exited because `fast` hit the end — no cycle.
+
+### 🧪 Dry Run
+
+**Case A — Cycle exists:** `3 -> 2 -> 0 -> -4 -> (back to 2)`
+
+| Iteration | `slow` before | `fast` before | `slow` after | `fast` after | `slow == fast`? |
+|---|---|---|---|---|---|
+| Start | — | — | `3` | `3` | — |
+| 1 | `3` | `3` | `2` | `0` | ❌ |
+| 2 | `2` | `0` | `0` | `2` | ❌ |
+| 3 | `0` | `2` | `-4` | `-4` | ✅ **true** |
+
+**Result:** `true` — pointers met at node `-4` after fast "lapped" slow inside the cycle.
+
+**Case B — No cycle:** `1 -> 2 -> null`
+
+| Iteration | `slow` before | `fast` before | Condition check | `slow` after | `fast` after |
+|---|---|---|---|---|---|
+| Start | — | — | — | `1` | `1` |
+| 1 | `1` | `1` | both non-null ✅ | `2` | `null` |
+| 2 | `2` | `null` | `fast == null` ❌ → **loop stops** | — | — |
+
+**Result:** `false` — `fast` reached `null` cleanly, no meeting ever happened.
+
+### 🔁 Why the Meeting is Guaranteed (Not Just Lucky)
+
+Once `slow` enters the cycle (length `L`), `fast` is already inside it too (it's faster, so it enters at or before `slow`). Think of the gap between them, measured as *how many forward steps `slow` needs to reach `fast`*:
+
+- Each iteration, `slow` moves +1 and `fast` moves +2 — so relative to `slow`, `fast` gains exactly **1 step per iteration** within the cycle.
+- The gap therefore shrinks by exactly 1 each iteration.
+- Since the gap decreases by a fixed integer amount every time, it cannot "jump over" zero — it **must** hit exactly 0 within at most `L` iterations.
+
+This is the same argument as two runners on a circular track where one is faster: the faster runner is guaranteed to lap the slower one at some exact point — it can't skip past that moment.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (HashSet) | O(n) | O(n) | Stores up to all `n` node references |
+| Optimal (Floyd's slow/fast) | O(n) | O(1) | Only two pointer variables; no matter how long the list or cycle is |
+
+### 🏷️ Pattern Tag
+
+`#slow-fast-pointers` `#tortoise-and-hare` `#floyds-cycle-detection`
+
+> 🎯 **When to recognize this pattern:** Any time a linked list problem involves detecting a loop, finding the **start** of a cycle, or checking "does this ever repeat" without wanting O(n) extra space — think: *slow/fast pointers, and check if they ever land on the same node.* This is the direct extension of the same two-pointer engine used for finding the middle of a list.
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
@@ -405,12 +557,13 @@ Given list: `1 -> 2 -> 3 -> null`
 | 1 | Delete Node in a Linked List | O(1) | O(1) | `#value-copy-trick` |
 | 2 | Middle of the Linked List | O(n) | O(1) | `#slow-fast-pointers` |
 | 3 | Reverse Linked List | O(n) | O(1) | `#three-pointer-reversal` |
+| 4 | Linked List Cycle | O(n) | O(1) | `#slow-fast-pointers` `#floyds-cycle-detection` |
 
 ---
 
 <div align="center">
 
 ### 🔄 This README updates after every new problem solved
-### Next up: keep grinding singly LL problems — reversal, cycle detection, and two-pointer patterns incoming 🚀
+### Next up: keep grinding singly LL problems — cycle start detection (Linked List Cycle II), palindrome check, and merge patterns incoming 🚀
 
 </div>
