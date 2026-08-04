@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-4-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-5-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -21,6 +21,7 @@
 | 2 | [Middle of the Linked List](#2-middle-of-the-linked-list) | 🟢 Easy | `#slow-fast-pointers` | ✅ Solved |
 | 3 | [Reverse Linked List](#3-reverse-linked-list) | 🟢 Easy | `#three-pointer-reversal` | ✅ Solved |
 | 4 | [Linked List Cycle](#4-linked-list-cycle) | 🟢 Easy | `#slow-fast-pointers` `#floyds-cycle-detection` | ✅ Solved |
+| 5 | [Linked List Cycle II](#5-linked-list-cycle-ii) | 🟡 Medium | `#slow-fast-pointers` `#floyds-cycle-detection` `#cycle-start-detection` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
@@ -549,6 +550,178 @@ This is the same argument as two runners on a circular track where one is faster
 > 🎯 **When to recognize this pattern:** Any time a linked list problem involves detecting a loop, finding the **start** of a cycle, or checking "does this ever repeat" without wanting O(n) extra space — think: *slow/fast pointers, and check if they ever land on the same node.* This is the direct extension of the same two-pointer engine used for finding the middle of a list.
 
 ---
+<a id="5-linked-list-cycle-ii"></a>
+## 5. Linked List Cycle II
+
+**LeetCode 142 — Medium**
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list, return the node where the cycle begins. If there is **no cycle**, return `null`.
+
+There is a cycle in a linked list if some node's `next` pointer can be followed to eventually loop back to a node that has already been visited. Internally, `pos` denotes the index of the node the tail connects to (`-1` if no cycle) — but this value is not passed to the function, it's just for describing the test case.
+
+**Do not modify** the linked list.
+
+**Example 1:**
+```
+Input: head = [3,2,0,-4], pos = 1
+Output: tail connects to node index 1 (value 2)
+Explanation: There is a cycle, where the tail connects to the second node.
+```
+
+**Example 2:**
+```
+Input: head = [1,2], pos = 0
+Output: tail connects to node index 0 (value 1)
+```
+
+**Example 3:**
+```
+Input: head = [1], pos = -1
+Output: null
+Explanation: No cycle exists.
+```
+
+**Constraints:**
+- The number of nodes in the list is in the range `[0, 10^4]`
+- `-10^5 <= Node.val <= 10^5`
+- `pos` is `-1` or a valid index in the linked list
+
+### 🧠 Key Insight
+
+This is the direct follow-up to **Problem 4 (Linked List Cycle)** — that problem only asked *"does a cycle exist?"*, this one asks *"where does it start?"*. Same `#slow-fast-pointers` engine, one extra phase bolted on. Detecting the cycle is not enough — after slow and fast meet somewhere *inside* the loop, a second, separate walk is needed to trace back to where the loop actually begins.
+
+### 🐌 Brute Force — HashSet of Visited Nodes
+
+**Approach:** Walk the list one node at a time, storing every visited node reference in a `Set`. The moment you land on a node that's *already in the set*, that node is the start of the cycle — because it's the first node you're seeing for the second time. If traversal reaches `null` first, there's no cycle.
+
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+public class Solution {
+    public ListNode detectCycle(ListNode head) {
+        Set<ListNode> visited = new HashSet<>();
+        ListNode curr = head;
+
+        while (curr != null) {
+            if (visited.contains(curr)) {
+                return curr;   // first repeated node = cycle start
+            }
+            visited.add(curr);
+            curr = curr.next;
+        }
+        return null;   // reached null cleanly, no cycle
+    }
+}
+```
+
+**Downside:** Same as problem 4's brute force — O(n) extra space in the worst case, since a cycle-free list still gets fully stored before `curr` reaches `null`.
+
+### ✅ Optimal Solution — Floyd's Cycle Detection (Two-Phase)
+
+**Idea:** Reuse the slow/fast pointers from Problem 4 to *detect* the cycle (Phase 1). Then exploit a distance property to *locate* the start (Phase 2) — no extra space needed.
+
+**Phase 1 — Find the meeting point** (identical to Problem 4):
+- `slow` moves 1 step, `fast` moves 2 steps.
+- If `fast` or `fast.next` hits `null` → no cycle → return `null`.
+- If they meet → cycle confirmed, meeting node saved.
+
+**Phase 2 — Find the start:**
+- Reset one pointer (`ptr1`) to `head`. Leave the other (`ptr2`) at the meeting point.
+- Move **both** pointers **1 step at a time**.
+- The node where they meet again is the **start of the cycle**.
+
+```java
+public class Solution {
+    public ListNode detectCycle(ListNode head) {
+        ListNode slow = head, fast = head;
+
+        // Phase 1: detect cycle
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+            if (slow == fast) {
+                // Phase 2: find cycle start
+                ListNode ptr1 = head;
+                ListNode ptr2 = slow;
+                while (ptr1 != ptr2) {
+                    ptr1 = ptr1.next;
+                    ptr2 = ptr2.next;
+                }
+                return ptr1;   // cycle start
+            }
+        }
+        return null;   // no cycle
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`slow = head; fast = head;`** — Same setup as problem 4.
+2. **`while (fast != null && fast.next != null)`** — Same safety guard: only continue while it's safe to move `fast` two steps.
+3. **`slow = slow.next; fast = fast.next.next;`** — `slow` takes 1 step, `fast` takes 2, exactly as before.
+4. **`if (slow == fast)`** — Cycle confirmed. Instead of just returning `true` like problem 4, this is where **Phase 2 begins**.
+5. **`ptr1 = head; ptr2 = slow;`** — `ptr1` restarts from the very beginning of the list; `ptr2` stays at the meeting point (using `slow`, since `slow == fast` at this point, either works).
+6. **`while (ptr1 != ptr2) { ptr1 = ptr1.next; ptr2 = ptr2.next; }`** — Both now move **one step at a time**, no more double-speed. They are guaranteed to land on the same node — and that node is the cycle's start (proof below).
+7. **`return ptr1;`** — Return the node where they converged.
+
+### 🧪 Dry Run
+
+**Cycle:** `1 -> 2 -> 3 -> 4 -> 5 -> (back to 3)`
+
+*Phase 1 (find meeting point):*
+
+| Iteration | `slow` before | `fast` before | `slow` after | `fast` after | `slow == fast`? |
+|---|---|---|---|---|---|
+| Start | — | — | `1` | `1` | — |
+| 1 | `1` | `1` | `2` | `3` | ❌ |
+| 2 | `2` | `3` | `3` | `5` | ❌ |
+| 3 | `3` | `5` | `4` | `4` | ✅ **true** (meet at `4`) |
+
+*Phase 2 (find cycle start):* `ptr1 = head = 1`, `ptr2 = meeting point = 4`
+
+| Iteration | `ptr1` before | `ptr2` before | `ptr1` after | `ptr2` after | `ptr1 == ptr2`? |
+|---|---|---|---|---|---|
+| Start | — | — | `1` | `4` | ❌ |
+| 1 | `1` | `4` | `2` | `5` | ❌ |
+| 2 | `2` | `5` | `3` | `3` | ✅ **true** |
+
+**Result:** `3` — matches the HashSet approach, confirmed with **O(1) space**.
+
+### 🔁 Why Phase 2 Works (Not Just Lucky)
+
+Let:
+- `X` = distance from `head` to the start of the cycle
+- `Y` = distance from the cycle start to the meeting point (along the cycle direction)
+- `C` = total cycle length
+
+When `slow` and `fast` meet, it can be shown that:
+
+```
+X = C - Y  (mod C)
+```
+
+This means: the distance from `head` back to the cycle start (`X`) is *exactly the same* as the remaining distance from the meeting point *forward* to the cycle start (`C - Y`). So if one pointer starts at `head` and another starts at the meeting point, and both move **1 step at a time**, they cover equal ground and land on the cycle start **at the same moment** — guaranteed, every time, regardless of where the cycle begins or how long it is.
+
+This is the same "guaranteed convergence" logic as problem 4's lapping argument — just applied to two pointers moving at the *same* speed instead of different speeds.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (HashSet) | O(n) | O(n) | Stores up to all `n` node references |
+| Optimal (Floyd's two-phase) | O(n) | O(1) | Only two/three pointer variables total; Phase 1 + Phase 2 are both still linear |
+
+### 🏷️ Pattern Tag
+
+`#slow-fast-pointers` `#tortoise-and-hare` `#floyds-cycle-detection` `#cycle-start-detection`
+
+> 🎯 **When to recognize this pattern:** Whenever a problem asks not just *"is there a cycle"* (Problem 4) but *"where exactly does it begin"* — think: detect the meeting point first, then reset one pointer to `head` and walk both one step at a time. It's Problem 4's engine plus one extra synchronized walk.
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
@@ -558,12 +731,13 @@ This is the same argument as two runners on a circular track where one is faster
 | 2 | Middle of the Linked List | O(n) | O(1) | `#slow-fast-pointers` |
 | 3 | Reverse Linked List | O(n) | O(1) | `#three-pointer-reversal` |
 | 4 | Linked List Cycle | O(n) | O(1) | `#slow-fast-pointers` `#floyds-cycle-detection` |
+| 5 | Linked List Cycle II | O(n) | O(1) | `#slow-fast-pointers` `#floyds-cycle-detection` `#cycle-start-detection` |
 
 ---
 
 <div align="center">
 
 ### 🔄 This README updates after every new problem solved
-### Next up: keep grinding singly LL problems — cycle start detection (Linked List Cycle II), palindrome check, and merge patterns incoming 🚀
+### Next up: keep grinding singly LL problems — palindrome check, merge two sorted lists, and remove Nth node from end incoming 🚀
 
 </div>
