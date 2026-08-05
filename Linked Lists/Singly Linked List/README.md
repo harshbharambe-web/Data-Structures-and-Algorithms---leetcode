@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-5-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-7-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -22,6 +22,8 @@
 | 3 | [Reverse Linked List](#3-reverse-linked-list) | 🟢 Easy | `#three-pointer-reversal` | ✅ Solved |
 | 4 | [Linked List Cycle](#4-linked-list-cycle) | 🟢 Easy | `#slow-fast-pointers` `#floyds-cycle-detection` | ✅ Solved |
 | 5 | [Linked List Cycle II](#5-linked-list-cycle-ii) | 🟡 Medium | `#slow-fast-pointers` `#floyds-cycle-detection` `#cycle-start-detection` | ✅ Solved |
+| 6 | [Odd Even Linked List](#6-odd-even-linked-list) | 🟡 Medium | `#in-place-rewiring` `#two-pointer-partition` | ✅ Solved |
+| 7 | [Palindrome Linked List](#7-palindrome-linked-list) | 🟢 Easy | `#slow-fast-pointers` `#three-pointer-reversal` `#combined-pattern` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
@@ -722,6 +724,324 @@ This is the same "guaranteed convergence" logic as problem 4's lapping argument 
 > 🎯 **When to recognize this pattern:** Whenever a problem asks not just *"is there a cycle"* (Problem 4) but *"where exactly does it begin"* — think: detect the meeting point first, then reset one pointer to `head` and walk both one step at a time. It's Problem 4's engine plus one extra synchronized walk.
 
 ---
+<a id="6-odd-even-linked-list"></a>
+## 6. Odd Even Linked List
+
+**LeetCode 328 — Medium**
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list, group all the nodes at **odd indices** together, followed by the nodes at **even indices**, and return the reordered list.
+
+The **first** node is considered **odd**, the second node is **even**, and so on. Note that the relative order inside each group should remain the same as the original list. You must solve it in **O(1) extra space** and **O(n) time**.
+
+**Example 1:**
+```
+Input: head = [1,2,3,4,5]
+Output: [1,3,5,2,4]
+```
+
+**Example 2:**
+```
+Input: head = [2,1,3,5,6,4,7]
+Output: [2,3,6,7,1,5,4]
+```
+
+**Constraints:**
+- The number of nodes is in the range `[0, 10^4]`
+- `-10^6 <= Node.val <= 10^6`
+
+### 🧠 Key Insight
+
+This isn't a sorting problem — it's a **partitioning-by-position** problem. Every node already knows whether it sits at an odd or even index just by where it is in the chain, so there's no need to compute or store index numbers at all. The whole list can be split into two interleaved sub-chains — "odd chain" and "even chain" — just by **re-routing existing `next` pointers**, then gluing the odd chain's tail to the even chain's head at the end.
+
+### 🐌 Brute Force — Bucket by Index, Then Overwrite
+
+**Approach:** Traverse once, tracking a 1-based index. Push each node's value into an `oddVals` list or `evenVals` list depending on whether the index is odd or even. Then do a second pass from `head`, overwriting `node.val` with values taken first from `oddVals`, then from `evenVals`. This is the same "simulate structural change via value overwrite" trick used in Problem 3's brute force.
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+    public ListNode oddEvenList(ListNode head) {
+        if (head == null) return head;
+
+        List<Integer> odd = new ArrayList<>();
+        List<Integer> even = new ArrayList<>();
+
+        ListNode temp = head;
+        int index = 1;
+        while (temp != null) {
+            if (index % 2 == 1) {
+                odd.add(temp.val);
+            } else {
+                even.add(temp.val);
+            }
+            temp = temp.next;
+            index++;
+        }
+
+        odd.addAll(even); // final order: all odd-position values, then all even-position values
+
+        temp = head;
+        for (int val : odd) {
+            temp.val = val;
+            temp = temp.next;
+        }
+
+        return head;
+    }
+}
+```
+
+**Downside:** Uses two `ArrayList`s that together hold all `n` values — O(n) extra space. It also only rewrites `val` fields rather than truly re-linking the nodes, so it fails the problem's explicit **O(1) space, actual restructuring** intent.
+
+### ✅ Optimal Solution — In-Place Two-Pointer Rewiring
+
+```java
+class Solution {
+    public ListNode oddEvenList(ListNode head) {
+
+        if (head == null || head.next == null) {
+            return head;
+        }
+
+        ListNode odd = head;
+        ListNode even = head.next;
+        ListNode evenHead = head.next;
+
+        while (even != null && even.next != null) {
+
+            odd.next = odd.next.next;
+            even.next = even.next.next;
+
+            odd = odd.next;
+            even = even.next;
+
+        }
+        odd.next = evenHead;
+
+        return head;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`if (head == null || head.next == null) return head;`** — A list with 0 or 1 nodes has nothing to reorder; return as-is. This also protects the very next lines from a `NullPointerException` when accessing `head.next`.
+2. **`odd = head; even = head.next; evenHead = head.next;`** — `odd` starts on the first (odd-indexed) node, `even` starts on the second (even-indexed) node. `evenHead` is saved separately as an **anchor** — once the odd chain is fully built, it needs to know where the even chain begins so it can attach to it.
+3. **`while (even != null && even.next != null)`** — The safe-to-continue guard. `even` needs to jump two nodes ahead (`even.next.next`), so both `even` and `even.next` must exist. This mirrors the exact same safety logic from Problems 2 and 4 — only here it's guarding a rewiring step instead of a traversal step.
+4. **`odd.next = odd.next.next;`** — Skip over the very next (even-indexed) node, re-pointing `odd` directly to the *next odd-indexed* node. This is the actual "pull the odd node out of its original position and re-link it to the next odd node" step.
+5. **`even.next = even.next.next;`** — Same idea for the even chain: skip over the next odd-indexed node, re-pointing `even` to the next even-indexed node.
+6. **`odd = odd.next; even = even.next;`** — Advance both pointers to their newly-linked next nodes, ready to repeat.
+7. **`odd.next = evenHead;`** — Once the loop exits (the even chain has run out), the **last node of the odd chain** needs to be glued onto the **first node of the even chain** — this is exactly what `evenHead` was saved for back in step 2.
+8. **`return head;`** — `head` is still the first odd node, which is now the head of the fully reordered list.
+
+### 🧪 Dry Run
+
+Given list: `1 -> 2 -> 3 -> 4 -> 5 -> null`
+
+Setup: `odd = 1`, `even = 2`, `evenHead = 2`
+
+| Iteration | Condition (`even≠null && even.next≠null`) | `odd.next=odd.next.next` | `even.next=even.next.next` | `odd` after | `even` after |
+|---|---|---|---|---|---|
+| 1 | `even=2≠null` ✅, `even.next=3≠null` ✅ | `1.next = 3` (skips 2) | `2.next = 4` (skips 3) | `3` | `4` |
+| 2 | `even=4≠null` ✅, `even.next=5≠null` ✅ | `3.next = 5` (skips 4) | `4.next = null` (since `5.next=null`) | `5` | `null` |
+| 3 | `even=null` ❌ → **loop stops** | — | — | — | — |
+
+After the loop: `odd.next = evenHead` → `5.next = 2`
+
+**Final chain, following `head`:** `1 -> 3 -> 5 -> 2 -> 4 -> null` ✅ — matches the expected output exactly, and every step was a pure `next`-pointer rewire with zero extra memory.
+
+> ⚠️ **Edge case — even-length list, e.g. `1 -> 2 -> 3 -> 4`:** `even` eventually becomes `null` right as `even.next` would have been accessed on the previous iteration's guard, so the loop exits cleanly. `odd` ends up sitting on the last odd node (`3`), and `odd.next = evenHead` correctly attaches `3 -> 2 -> 4 -> null`, giving `1 -> 3 -> 2 -> 4 -> null`.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (bucket + overwrite) | O(n) | O(n) | Two `ArrayList`s hold all `n` values across two passes |
+| Optimal (in-place rewiring) | O(n) | O(1) | Single pass, only three pointer variables (`odd`, `even`, `evenHead`), true structural re-link |
+
+### 🏷️ Pattern Tag
+
+`#in-place-rewiring` `#two-pointer-partition` `#linked-list-restructuring`
+
+> 🎯 **When to recognize this pattern:** Any time a problem asks you to **split or interleave** a linked list based on position (odd/even index, first-half/second-half, etc.) while keeping O(1) space — think: *can I run two pointers simultaneously down two "virtual" sub-chains, re-pointing `next` as I go, and stitch the chains together at the end with a saved anchor node?*
+
+---
+<a id="7-palindrome-linked-list"></a>
+## 7. Palindrome Linked List
+
+**LeetCode 234 — Easy**
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list, return `true` if it is a **palindrome** (reads the same forwards and backwards), or `false` otherwise.
+
+**Example 1:**
+```
+Input: head = [1,2,2,1]
+Output: true
+```
+
+**Example 2:**
+```
+Input: head = [1,2]
+Output: false
+```
+
+**Constraints:**
+- The number of nodes in the list is in the range `[1, 10^5]`
+- `0 <= Node.val <= 9`
+
+### 🧠 Key Insight
+
+Checking a palindrome is trivial with an array — walk from both ends inward with two indices. A singly linked list can't be walked **backward** at all, so the naive two-pointer-from-both-ends trick doesn't directly apply. This problem is really a showcase of combining two patterns already built earlier in this repo: **Problem 2's slow/fast pointers** to find the middle in one pass, and **Problem 3's three-pointer reversal** to flip the second half so it *can* be walked "backward" using only forward `next` pointers.
+
+### 🐌 Brute Force — Copy Into an ArrayList, Two-Pointer Check
+
+**Approach:** Traverse the list once, copying every value into an `ArrayList`. Since arrays/lists support O(1) random access from both ends, just run the classic two-pointer palindrome check (`i` from the front, `j` from the back) on that list.
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+    public boolean isPalindrome(ListNode head) {
+        List<Integer> values = new ArrayList<>();
+        ListNode temp = head;
+        while (temp != null) {
+            values.add(temp.val);
+            temp = temp.next;
+        }
+
+        int i = 0, j = values.size() - 1;
+        while (i < j) {
+            if (!values.get(i).equals(values.get(j))) {
+                return false;
+            }
+            i++;
+            j--;
+        }
+        return true;
+    }
+}
+```
+
+**Downside:** The `ArrayList` holds all `n` values, so this costs O(n) **extra space** — it sidesteps the linked list's forward-only limitation entirely instead of solving it, which is fine for correctness but not for the tighter O(1)-space expectation on this problem.
+
+### ✅ Optimal Solution — Find Middle + Reverse Second Half + Compare
+
+**Idea:** Combine three phases, each reusing a pattern already established earlier in this repo:
+
+1. **Find the middle** using slow/fast pointers (Problem 2's exact engine).
+2. **Reverse the second half** in place using three-pointer reversal (Problem 3's exact engine) — this is what gives us a "backward-readable" path using only forward `next` pointers.
+3. **Walk both halves forward simultaneously** and compare values — if every pair matches, it's a palindrome.
+
+```java
+class Solution {
+    public boolean isPalindrome(ListNode head) {
+        if (head == null || head.next == null) {
+            return true;
+        }
+
+        // Phase 1: find the middle (slow/fast pointers)
+        ListNode slow = head, fast = head;
+        while (fast != null && fast.next != null) {
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        // Phase 2: reverse the second half, starting at slow
+        ListNode secondHalfHead = reverse(slow);
+        ListNode firstHalf = head;
+        ListNode secondHalf = secondHalfHead;
+
+        // Phase 3: compare both halves
+        boolean isPalindrome = true;
+        while (secondHalf != null) {
+            if (firstHalf.val != secondHalf.val) {
+                isPalindrome = false;
+                break;
+            }
+            firstHalf = firstHalf.next;
+            secondHalf = secondHalf.next;
+        }
+
+        // Phase 4 (good practice): restore the list to its original structure
+        reverse(secondHalfHead);
+
+        return isPalindrome;
+    }
+
+    private ListNode reverse(ListNode node) {
+        ListNode prev = null;
+        while (node != null) {
+            ListNode next = node.next;
+            node.next = prev;
+            prev = node;
+            node = next;
+        }
+        return prev;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`if (head == null || head.next == null) return true;`** — A list with 0 or 1 nodes is trivially a palindrome.
+2. **`slow = head; fast = head;` … slow/fast loop** — Exactly Problem 2's middle-finding logic. For odd-length lists, `slow` lands on the true middle; for even-length lists, `slow` lands on the **second** of the two middle nodes — which is precisely where the second half should begin.
+3. **`secondHalfHead = reverse(slow);`** — Calls the exact same three-pointer reversal from Problem 3, but starting at `slow` instead of `head`, reversing only the second half of the list in place.
+4. **`firstHalf = head; secondHalf = secondHalfHead;`** — Two independent pointers, each walking **forward** — but because the second half was reversed, walking it forward now visits nodes in the original list's **backward** order.
+5. **`while (secondHalf != null) { ... }`** — Compare values pairwise. The loop bound is `secondHalf`, not `firstHalf`, because the second half is always the same length or one shorter than the first half (for odd-length lists) — it's the shorter/equal side that safely determines when comparison is complete.
+6. **`firstHalf.val != secondHalf.val` → `isPalindrome = false; break;`** — First mismatch found means it's definitely not a palindrome; stop early rather than scanning the rest.
+7. **`reverse(secondHalfHead);`** — Optional but good practice: reverses the second half back to its original direction, so the input list is left unmodified from the caller's perspective (many interviewers expect this).
+8. **`return isPalindrome;`**
+
+### 🧪 Dry Run
+
+Given list: `1 -> 2 -> 2 -> 1 -> null`
+
+**Phase 1 — find middle:**
+
+| Iteration | `slow` before | `fast` before | Condition | `slow` after | `fast` after |
+|---|---|---|---|---|---|
+| Start | — | — | — | `1`(idx0) | `1`(idx0) |
+| 1 | idx0 | idx0 | both non-null ✅ | `2`(idx1) | `2`(idx2) |
+| 2 | idx1 | idx2 | `fast≠null` ✅, `fast.next(idx3)≠null` ✅ | `2`(idx2) | `null` (idx2.next.next) |
+| 3 | — | `null` | `fast==null` ❌ → stop | — | — |
+
+`slow` ends at index 2 (the second `2`) — correct second-middle node for an even-length list.
+
+**Phase 2 — reverse from `slow`:** original second half is `2(idx2) -> 1(idx3) -> null`. Reversing gives `1(idx3) -> 2(idx2) -> null`. So `secondHalfHead` = the node holding `1` (originally last node).
+
+**Phase 3 — compare:**
+
+| Step | `firstHalf.val` | `secondHalf.val` | Equal? | Next |
+|---|---|---|---|---|
+| 1 | `1` (idx0) | `1` (idx3, now first in reversed chain) | ✅ | advance both |
+| 2 | `2` (idx1) | `2` (idx2, now second in reversed chain) | ✅ | advance both |
+| 3 | — | `secondHalf = null` | loop ends | — |
+
+**Result:** `isPalindrome = true` ✅ — matches expected output.
+
+**Quick check on a false case:** `1 -> 2 -> null` → middle-finding lands `slow` at index 1 (`2`). Reversing the second half (just the single node `2`) gives back `2`. Comparing `firstHalf.val = 1` vs `secondHalf.val = 2` → mismatch on the very first comparison → returns `false` ✅.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (ArrayList two-pointer) | O(n) | O(n) | Stores all `n` values to get random/backward access |
+| Optimal (middle + reverse + compare) | O(n) | O(1) | Middle-finding is O(n), reversal of half the list is O(n/2), comparison is O(n/2) — all still linear; only a fixed number of pointers used |
+
+### 🏷️ Pattern Tag
+
+`#slow-fast-pointers` `#three-pointer-reversal` `#combined-pattern`
+
+> 🎯 **When to recognize this pattern:** Whenever a linked list problem needs something that *feels* like backward traversal (palindrome checks, comparing halves, mirroring) but the list only supports forward links — think: *find the middle, reverse the second half in place, then walk both halves forward together.* This problem is a direct proof of why building a library of small, reusable patterns (slow/fast pointers, three-pointer reversal) pays off — the "hard" problem here is just two earlier solved problems glued together.
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
@@ -732,12 +1052,14 @@ This is the same "guaranteed convergence" logic as problem 4's lapping argument 
 | 3 | Reverse Linked List | O(n) | O(1) | `#three-pointer-reversal` |
 | 4 | Linked List Cycle | O(n) | O(1) | `#slow-fast-pointers` `#floyds-cycle-detection` |
 | 5 | Linked List Cycle II | O(n) | O(1) | `#slow-fast-pointers` `#floyds-cycle-detection` `#cycle-start-detection` |
+| 6 | Odd Even Linked List | O(n) | O(1) | `#in-place-rewiring` `#two-pointer-partition` |
+| 7 | Palindrome Linked List | O(n) | O(1) | `#slow-fast-pointers` `#three-pointer-reversal` `#combined-pattern` |
 
 ---
 
 <div align="center">
 
 ### 🔄 This README updates after every new problem solved
-### Next up: keep grinding singly LL problems — palindrome check, merge two sorted lists, and remove Nth node from end incoming 🚀
+### Next up: keep grinding singly LL problems — merge two sorted lists, remove Nth node from end, and intersection of two linked lists incoming 🚀
 
 </div>
