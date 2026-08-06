@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-7-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-10-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -24,6 +24,9 @@
 | 5 | [Linked List Cycle II](#5-linked-list-cycle-ii) | 🟡 Medium | `#slow-fast-pointers` `#floyds-cycle-detection` `#cycle-start-detection` | ✅ Solved |
 | 6 | [Odd Even Linked List](#6-odd-even-linked-list) | 🟡 Medium | `#in-place-rewiring` `#two-pointer-partition` | ✅ Solved |
 | 7 | [Palindrome Linked List](#7-palindrome-linked-list) | 🟢 Easy | `#slow-fast-pointers` `#three-pointer-reversal` `#combined-pattern` | ✅ Solved |
+| 8 | [Delete Nth Node From End of List](#8-delete-nth-node-from-end-of-list) | 🟡 Medium | `#two-pointer-gap` `#dummy-node-technique` | ✅ Solved |
+| 9 | [Delete the Middle Node of a Linked List](#9-delete-the-middle-node-of-a-linked-list) | 🟡 Medium | `#slow-fast-pointers` `#trailing-pointer` | ✅ Solved |
+| 10 | [Sort a Linked List of 0s, 1s, and 2s](#10-sort-a-linked-list-of-0s-1s-and-2s) | 🟡 Medium | `#dutch-national-flag` `#dummy-node-bucketing` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
@@ -1042,6 +1045,452 @@ Given list: `1 -> 2 -> 2 -> 1 -> null`
 > 🎯 **When to recognize this pattern:** Whenever a linked list problem needs something that *feels* like backward traversal (palindrome checks, comparing halves, mirroring) but the list only supports forward links — think: *find the middle, reverse the second half in place, then walk both halves forward together.* This problem is a direct proof of why building a library of small, reusable patterns (slow/fast pointers, three-pointer reversal) pays off — the "hard" problem here is just two earlier solved problems glued together.
 
 ---
+<a id="8-delete-nth-node-from-end-of-list"></a>
+## 8. Delete Nth Node From End of List
+
+**LeetCode 19 — Medium**
+
+### 📋 Problem Statement
+
+Given the `head` of a linked list, remove the `n`th node **from the end** of the list, and return its head.
+
+**Example 1:**
+```
+Input: head = [1,2,3,4,5], n = 2
+Output: [1,2,3,5]
+```
+
+**Example 2:**
+```
+Input: head = [1], n = 1
+Output: []
+```
+
+**Example 3:**
+```
+Input: head = [1,2], n = 1
+Output: [1]
+```
+
+**Constraints:**
+- The number of nodes in the list is `sz`
+- `1 <= sz <= 30`
+- `0 <= Node.val <= 100`
+- `1 <= n <= sz`
+
+### 🧠 Key Insight
+
+The list can only be walked **forward**, but "from the end" is inherently a **backward** measurement. Since `n` and the list's total length aren't both known upfront, the naive way is to first find out the length, then translate "nth from the end" into "which position from the start." The clever way avoids computing the length entirely: keep a **fixed gap of `n` nodes** between two pointers — when the front one reaches the end, the back one is standing exactly `n` nodes from the end.
+
+A recurring edge case worth flagging early: the node to delete might be the **head itself** (e.g., `n == sz`). Deleting the head needs special-case handling *unless* a **dummy node** is placed before `head` — a small trick that makes "removing the head" and "removing any other node" go through the exact same code path.
+
+### 🐌 Brute Force — Count Length, Then Walk to `(length - n)`th Node
+
+**Approach:** Traverse once to count the total nodes `length`. The node to delete sits at 0-indexed position `length - n` from the start, so its **predecessor** sits at `length - n - 1`. Walk to that predecessor and bypass the target node — using a dummy node in front of `head` so that even deleting the actual head is handled uniformly.
+
+```java
+class Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        ListNode dummy = new ListNode(0);
+        dummy.next = head;
+
+        // Pass 1: count total nodes
+        int length = 0;
+        ListNode temp = head;
+        while (temp != null) {
+            length++;
+            temp = temp.next;
+        }
+
+        // Pass 2: walk to the node just before the target
+        ListNode prev = dummy;
+        for (int i = 0; i < length - n; i++) {
+            prev = prev.next;
+        }
+
+        prev.next = prev.next.next;
+
+        return dummy.next;
+    }
+}
+```
+
+**Why the dummy node matters even here:** If `n == length` (deleting the actual head), the loop `for (int i = 0; i < length - n; i++)` runs **zero times**, so `prev` stays at `dummy`. Then `prev.next = prev.next.next` correctly rewires `dummy.next` to skip the old head — no special `if (n == length)` branch needed. Without the dummy, `prev` would have nowhere valid to start from in that case.
+
+**Downside:** Two full passes over the list — one to count, one to walk to the deletion point.
+
+### ✅ Optimal Solution — Two Pointers with a Fixed Gap of `n`
+
+```java
+class Solution {
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        ListNode dummy = new ListNode(0);
+        dummy.next = head;
+
+        ListNode fast = dummy;
+        ListNode slow = dummy;
+
+        // Push fast n steps ahead first
+        for (int i = 0; i < n; i++) {
+            fast = fast.next;
+        }
+
+        // Move both until fast hits the last node
+        while (fast.next != null) {
+            fast = fast.next;
+            slow = slow.next;
+        }
+
+        slow.next = slow.next.next;
+
+        return dummy.next;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`dummy = new ListNode(0); dummy.next = head;`** — The same trick as the brute force: a sentinel node placed one step before `head`. This guarantees `slow` always has a valid "previous node" to sit on, even when the target to delete is the head itself.
+2. **`fast = dummy; slow = dummy;`** — Both start at the sentinel, not at `head` — this offset-by-one is what makes `slow` land on the **predecessor** of the target instead of the target itself.
+3. **`for (int i = 0; i < n; i++) fast = fast.next;`** — Push `fast` exactly `n` steps ahead of `slow` *before* the main loop starts. This establishes the fixed gap: from this point on, `fast` is always exactly `n` nodes ahead of `slow`.
+4. **`while (fast.next != null) { fast = fast.next; slow = slow.next; }`** — Advance both pointers **together**, one step each, until `fast` reaches the **last node** (`fast.next == null`, meaning `fast` itself is the tail). Because the gap between them never changes, the moment `fast` is at the tail, `slow` is exactly `n` nodes behind the tail — i.e., sitting right before the node that is `n`th from the end.
+5. **`slow.next = slow.next.next;`** — `slow` is the predecessor; skip over the target node to delete it, exactly like the classic "unlink via predecessor" pattern.
+6. **`return dummy.next;`** — Return the (possibly new) head, which is why `dummy.next` — not `head` — is returned: if the original head was deleted, `dummy.next` reflects that correctly, while the local variable `head` would still point to the removed node.
+
+### 🧪 Dry Run
+
+Given list: `1 -> 2 -> 3 -> 4 -> 5 -> null`, `n = 2`
+
+`dummy -> 1 -> 2 -> 3 -> 4 -> 5 -> null`
+
+**Step 1 — push `fast` ahead by `n = 2`:** `fast = dummy`, then two hops → `fast` lands on node `2`. `slow` stays at `dummy`.
+
+**Step 2 — advance both until `fast.next == null`:**
+
+| Iteration | `fast` before | `fast.next` | Continue? | `fast` after | `slow` after |
+|---|---|---|---|---|---|
+| 1 | `2` | `3` (≠null) | ✅ | `3` | `1` |
+| 2 | `3` | `4` (≠null) | ✅ | `4` | `2` |
+| 3 | `4` | `5` (≠null) | ✅ | `5` | `3` |
+| 4 | `5` | `null` | ❌ → **stop** | — | — |
+
+`fast` is now the tail (`5`), `slow` sits at node `3` — exactly the predecessor of the node to remove.
+
+**Step 3 — unlink:** `slow.next = slow.next.next` → `3.next = 5` (skips `4`).
+
+**Result:** `dummy.next` → `1 -> 2 -> 3 -> 5 -> null` ✅ — matches expected output `[1,2,3,5]`.
+
+> ⚠️ **Edge case — deleting the head, e.g. `[1]`, `n = 1`:** `fast` starts at `dummy`, pushed `1` step ahead lands on node `1` (the only node). Then `fast.next == null` immediately, so the `while` loop never runs — `slow` stays at `dummy`. `slow.next = slow.next.next` → `dummy.next = null`. Returning `dummy.next` gives `null`, i.e. an empty list ✅ — correctly handled with no special-case branch, entirely because `slow` and `fast` both started at `dummy` instead of `head`.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (count + walk) | O(n) | O(1) | Two full passes over the list, no extra structures |
+| Optimal (fixed-gap two pointers) | O(n) | O(1) | Single pass — `fast` and `slow` together cover the list once |
+
+### 🏷️ Pattern Tag
+
+`#two-pointer-gap` `#dummy-node-technique` `#n-steps-ahead`
+
+> 🎯 **When to recognize this pattern:** Any time a problem asks for something measured **"from the end"** of a singly linked list (kth from the end, remove nth from end, etc.) without wanting a length-counting pass — think: *push one pointer `n` steps ahead first, then move both together; the gap does the counting for you.* And whenever "the node to remove/modify might be the head" is a possibility, reach for a **dummy node** so head-deletion isn't a special case.
+
+---
+<a id="9-delete-the-middle-node-of-a-linked-list"></a>
+## 9. Delete the Middle Node of a Linked List
+
+**LeetCode 2095 — Medium**
+
+### 📋 Problem Statement
+
+Given the `head` of a linked list, delete the **middle node**, and return the `head` of the modified linked list.
+
+The middle node of a linked list of size `n` is the `⌊n / 2⌋`th node (**0-indexed**).
+
+**Example 1:**
+```
+Input: head = [1,3,4,7,1,2,6]
+Output: [1,3,4,1,2,6]
+Explanation: n = 7, middle index = ⌊7/2⌋ = 3 (value 7). Removing it gives [1,3,4,1,2,6].
+```
+
+**Example 2:**
+```
+Input: head = [1,2,3,4]
+Output: [1,2,4]
+Explanation: n = 4, middle index = ⌊4/2⌋ = 2 (value 3). Removing it gives [1,2,4].
+```
+
+**Example 3:**
+```
+Input: head = [2,1]
+Output: [2]
+Explanation: n = 2, middle index = 1 (value 1). Removing it gives [2].
+```
+
+**Example 4:**
+```
+Input: head = [1]
+Output: []
+Explanation: n = 1, the only node is the middle node — it's removed entirely.
+```
+
+**Constraints:**
+- The number of nodes in the list is in the range `[1, 10^5]`
+- `1 <= Node.val <= 10^5`
+
+### 🧠 Key Insight
+
+This is Problem 2 (Middle of the Linked List) with one extra requirement: it's not enough to *find* the middle, the node **before** it is also needed, so it can be unlinked. This means the slow/fast engine needs a small upgrade — a third pointer, `prev`, that always trails exactly one step behind `slow`. When the loop ends, `slow` is on the middle (same node Problem 2 would return), and `prev` is sitting right where a deletion needs to happen.
+
+### 🐌 Brute Force — Count Length, Then Walk to the Predecessor
+
+**Approach:** Traverse once to get the total length. Compute `mid = length / 2`. Walk from `head` to the node just before index `mid` (i.e., `mid - 1` steps), then bypass the middle node.
+
+```java
+class Solution {
+    public ListNode deleteMiddle(ListNode head) {
+        if (head.next == null) {
+            return null;
+        }
+
+        int length = 0;
+        ListNode temp = head;
+        while (temp != null) {
+            length++;
+            temp = temp.next;
+        }
+
+        int mid = length / 2;
+        ListNode prev = head;
+        for (int i = 0; i < mid - 1; i++) {
+            prev = prev.next;
+        }
+
+        prev.next = prev.next.next;
+
+        return head;
+    }
+}
+```
+
+**Downside:** Two full passes over the list — one to count, one to reach the predecessor. Note the single-node case (`head.next == null`) is handled separately up front, since there's no predecessor at all to walk to when the only node in the list *is* the middle node.
+
+### ✅ Optimal Solution — Slow/Fast Pointers with a Trailing `prev`
+
+```java
+class Solution {
+    public ListNode deleteMiddle(ListNode head) {
+        if (head.next == null) {
+            return null;
+        }
+
+        ListNode prev = null;
+        ListNode slow = head;
+        ListNode fast = head;
+
+        while (fast != null && fast.next != null) {
+            prev = slow;
+            slow = slow.next;
+            fast = fast.next.next;
+        }
+
+        prev.next = slow.next;
+
+        return head;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`if (head.next == null) return null;`** — A single-node list has no predecessor to give `prev`, and deleting its only node leaves an empty list — handled as a direct special case up front.
+2. **`prev = null; slow = head; fast = head;`** — Same starting positions as Problem 2's slow/fast setup, plus one new pointer, `prev`, that starts empty since `slow` hasn't moved yet.
+3. **`while (fast != null && fast.next != null)`** — The exact same safety guard as Problem 2 — only continue while it's safe for `fast` to jump two steps.
+4. **`prev = slow;`** — **Before** `slow` advances, save its current position into `prev`. This is what keeps `prev` permanently one step behind `slow`, iteration after iteration.
+5. **`slow = slow.next; fast = fast.next.next;`** — Identical movement to Problem 2: `slow` +1, `fast` +2.
+6. **`prev.next = slow.next;`** — Once the loop ends, `slow` is sitting on the middle node (same landing spot Problem 2 proves), and `prev` is its immediate predecessor. Skipping over `slow` deletes it from the chain.
+7. **`return head;`** — `head` itself is never touched here (only middle nodes strictly after index 0 can be `prev`'s target when `length ≥ 2`), so the original head reference is still valid to return.
+
+### 🧪 Dry Run
+
+Given list: `1 -> 3 -> 4 -> 7 -> 1 -> 2 -> 6 -> null` (7 nodes, indices 0–6, expected middle index = 3, value `7`)
+
+| Iteration | `fast` before | `fast.next` before | Condition | `prev = slow` | `slow` after | `fast` after |
+|---|---|---|---|---|---|---|
+| Start | — | — | — | — | idx0 (`1`) | idx0 (`1`) |
+| 1 | idx0 | idx1 (≠null) | ✅ | idx0 (`1`) | idx1 (`3`) | idx2 (`4`) |
+| 2 | idx2 | idx3 (≠null) | ✅ | idx1 (`3`) | idx2 (`4`) | idx4 (`1`) |
+| 3 | idx4 | idx5 (≠null) | ✅ | idx2 (`4`) | idx3 (`7`) | idx6 (`6`) |
+| 4 | idx6 | `null` | ❌ → **stop** | — | — | — |
+
+`prev` ends at idx2 (value `4`), `slow` ends at idx3 (value `7`) — exactly the middle node Problem 2 would find, now paired with its predecessor.
+
+**Unlink:** `prev.next = slow.next` → `4.next = 1(idx4)` (skips `7`).
+
+**Result:** `1 -> 3 -> 4 -> 1 -> 2 -> 6 -> null` ✅ — matches expected output `[1,3,4,1,2,6]`.
+
+> ⚠️ **Edge case — two nodes, `[2,1]`:** `prev = null, slow = 2, fast = 2`. Loop check: `fast≠null` ✅, `fast.next(1)≠null` ✅ → enter once: `prev = 2`, `slow = 1`, `fast = 1.next.next = null` (since `1.next = null`, `null.next` would crash — but this isn't evaluated because `fast.next.next` here is `fast = fast.next.next` where `fast.next` was the last node `1`, whose own `.next` is `null`, so `fast` becomes `null` safely). Loop check again: `fast == null` ❌ → stop. `prev.next = slow.next` → `2.next = null`. Result: `[2]` ✅.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (count + walk) | O(n) | O(1) | Two full passes, no extra structures |
+| Optimal (slow/fast + trailing `prev`) | O(n) | O(1) | Single pass — identical traversal cost to Problem 2, with one extra pointer assignment per iteration |
+
+### 🏷️ Pattern Tag
+
+`#slow-fast-pointers` `#trailing-pointer` `#middle-node-deletion`
+
+> 🎯 **When to recognize this pattern:** Any time a problem needs the **predecessor** of a node that slow/fast pointers would normally land on (deleting the middle, inserting before the middle, etc.) — think: *add a third pointer that always saves the previous position of `slow` right before `slow` moves.* It's Problem 2's exact engine with one line added.
+
+---
+<a id="10-sort-a-linked-list-of-0s-1s-and-2s"></a>
+## 10. Sort a Linked List of 0s, 1s, and 2s
+
+**GeeksforGeeks — Medium** *(the linked-list version of the classic Dutch National Flag problem)*
+
+### 📋 Problem Statement
+
+Given the `head` of a singly linked list where every node's value is either `0`, `1`, or `2`, sort the list **in-place** so that all `0`s come first, then all `1`s, then all `2`s. Do not use a library sort.
+
+**Example 1:**
+```
+Input: head = [1,2,0,1]
+Output: [0,1,1,2]
+```
+
+**Example 2:**
+```
+Input: head = [0,1,2,0,1,2]
+Output: [0,0,1,1,2,2]
+```
+
+**Constraints:**
+- The number of nodes is in the range `[1, 10^5]`
+- Every `Node.val` is exactly `0`, `1`, or `2`
+
+### 🧠 Key Insight
+
+This looks like a sorting problem, but with only **3 distinct values**, it's really a **partitioning** problem — the linked-list cousin of the array-based Dutch National Flag algorithm. Because the set of possible values is so small and fixed, there's a clean way to "sort" without ever comparing two values against each other: just **split the list into three separate chains** — one for `0`s, one for `1`s, one for `2`s — using **dummy anchor nodes** for each (the same anchoring trick as `evenHead` in Problem 6), then glue the three chains together: zeros → ones → twos.
+
+Unlike Problem 1 (Delete Node), where node *values* could repeat and only node *identity* mattered, here we genuinely only care about **values** — which is what makes bucketing by value both safe and sufficient.
+
+### 🐌 Brute Force — Count Occurrences, Then Overwrite Values
+
+**Approach:** Traverse once to count how many `0`s, `1`s, and `2`s exist. Then traverse again from `head`, overwriting the first `count0` nodes' values with `0`, the next `count1` nodes' values with `1`, and the rest with `2`. Same "simulate restructuring via value overwrite" trick seen in Problems 3 and 6.
+
+```java
+class Solution {
+    public ListNode segregate(ListNode head) {
+        int count0 = 0, count1 = 0, count2 = 0;
+
+        ListNode temp = head;
+        while (temp != null) {
+            if (temp.val == 0) count0++;
+            else if (temp.val == 1) count1++;
+            else count2++;
+            temp = temp.next;
+        }
+
+        temp = head;
+        int i = 0;
+        while (i < count0) { temp.val = 0; temp = temp.next; i++; }
+        i = 0;
+        while (i < count1) { temp.val = 1; temp = temp.next; i++; }
+        i = 0;
+        while (i < count2) { temp.val = 2; temp = temp.next; i++; }
+
+        return head;
+    }
+}
+```
+
+**Downside:** Only overwrites `val` fields — the actual node objects and their `next` links never move, so it's not a true structural sort (matters if external references to specific node objects exist elsewhere). It also relies on four separate traversal loops (still O(n) total, but conceptually clunkier than a single pass).
+
+### ✅ Optimal Solution — Three-Way Bucketing with Dummy Nodes
+
+```java
+class Solution {
+    public ListNode segregate(ListNode head) {
+        ListNode zeroD = new ListNode(-1);
+        ListNode oneD = new ListNode(-1);
+        ListNode twoD = new ListNode(-1);
+
+        ListNode zero = zeroD, one = oneD, two = twoD;
+
+        ListNode curr = head;
+        while (curr != null) {
+            if (curr.val == 0) {
+                zero.next = curr;
+                zero = zero.next;
+            } else if (curr.val == 1) {
+                one.next = curr;
+                one = one.next;
+            } else {
+                two.next = curr;
+                two = two.next;
+            }
+            curr = curr.next;
+        }
+
+        zero.next = (oneD.next != null) ? oneD.next : twoD.next;
+        one.next = twoD.next;
+        two.next = null;
+
+        return zeroD.next;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`zeroD = new ListNode(-1); oneD = ...; twoD = ...;`** — Three separate **dummy anchors**, one per bucket. Exactly the same purpose as `evenHead` in Problem 6 and `dummy` in Problem 8: a fixed starting point that makes stitching the final result trivial, regardless of whether a given bucket ends up empty.
+2. **`zero = zeroD; one = oneD; two = twoD;`** — Three **tail pointers**, one per chain, all starting at their respective dummy.
+3. **`while (curr != null) { ... }`** — A single pass over the original list. For each node, route it onto the tail of the matching bucket by rewiring that bucket's tail's `next` to point at `curr`, then advance that tail to `curr`.
+4. **`curr = curr.next;`** — Crucially, this reads `curr`'s **original** `next` pointer *before* it gets overwritten by some other bucket's stitching step later — at this point in the loop, `curr.next` hasn't been touched yet (only the *previous* tail's `next` field was modified, which is a different node), so this is always safe.
+5. **`zero.next = (oneD.next != null) ? oneD.next : twoD.next;`** — After the loop, connect the zero chain's tail to the start of the one chain — unless the one chain is empty, in which case skip straight to the two chain. This correctly handles the "no 1s in the input" edge case.
+6. **`one.next = twoD.next;`** — Connect the one chain's tail to the start of the two chain (or `null`, if empty — either way this is correct and harmless even if the one chain itself was empty, since it's simply never reached from `zeroD` in that case).
+7. **`two.next = null;`** — **This line is not optional.** Since node `.next` pointers are only ever *read* (via `curr = curr.next`) and never cleared during the bucketing loop, the last node appended to the two-chain may still be carrying its **original** `next` pointer from the input list — which could now point into a completely different bucket. Explicitly nulling it out guarantees the final list actually terminates correctly.
+8. **`return zeroD.next;`** — The new head, whichever chain it actually belongs to (correctly resolves to the one-chain's or two-chain's head if the zero chain was empty, since `zeroD.next` was wired directly to the first non-empty chain).
+
+### 🧪 Dry Run
+
+Given list: `1 -> 2 -> 0 -> 1 -> null`
+
+Setup: `zeroD, oneD, twoD` all point to empty dummies; `zero = zeroD`, `one = oneD`, `two = twoD`; `curr = 1(head)`
+
+| Step | `curr.val` | Action | Tail advances to | `curr` after |
+|---|---|---|---|---|
+| 1 | `1` | `oneD.next = curr` (node `1`) | `one = node(1)` | `2` |
+| 2 | `2` | `twoD.next = curr` (node `2`) | `two = node(2)` | `0` |
+| 3 | `0` | `zeroD.next = curr` (node `0`) | `zero = node(0)` | `1` (second node valued `1`) |
+| 4 | `1` | `one.next = curr` → `node(1).next = node(1)second` | `one = node(1)second` | `null` (loop ends) |
+
+**Stitching:**
+- `zero.next = (oneD.next != null) ? oneD.next : twoD.next` → `oneD.next` is the first `1`-node (not null) → `zero.next = node(1)first` → so `node(0).next = node(1)first`
+- `one.next = twoD.next` → `node(1)second.next = node(2)`
+- `two.next = null` → `node(2).next = null`
+
+**Final chain, following `zeroD.next`:** `0 -> 1 -> 1 -> 2 -> null` ✅ — matches expected output `[0,1,1,2]`.
+
+> ⚠️ **Why `two.next = null` was the step that actually mattered here:** In the original input, node `2`'s next pointer was `0` (`2 -> 0` in the input list). If step 7 were skipped, `node(2).next` would still be dangling toward node `0` — which now lives at the very *front* of the final list — silently creating an incorrect cycle. Explicitly nulling the last bucket's tail is what prevents this.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (count + overwrite) | O(n) | O(1) | Four total passes (one count + three overwrite loops), no extra data structures, but only rewrites values |
+| Optimal (three-way bucketing) | O(n) | O(1) | Single pass; only pointer variables used — no new nodes allocated, existing nodes are truly re-linked |
+
+### 🏷️ Pattern Tag
+
+`#dutch-national-flag` `#three-way-partitioning` `#dummy-node-bucketing`
+
+> 🎯 **When to recognize this pattern:** Any time a linked list needs to be **grouped or partitioned into a small, fixed number of categories** (2 categories → Problem 6's odd/even; 3 categories → this problem) while preserving relative order within each group and using O(1) space — think: *one dummy + tail pointer per category, route each node to the matching tail in a single pass, then stitch the chains together and explicitly terminate the last one.*
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
@@ -1054,12 +1503,15 @@ Given list: `1 -> 2 -> 2 -> 1 -> null`
 | 5 | Linked List Cycle II | O(n) | O(1) | `#slow-fast-pointers` `#floyds-cycle-detection` `#cycle-start-detection` |
 | 6 | Odd Even Linked List | O(n) | O(1) | `#in-place-rewiring` `#two-pointer-partition` |
 | 7 | Palindrome Linked List | O(n) | O(1) | `#slow-fast-pointers` `#three-pointer-reversal` `#combined-pattern` |
+| 8 | Delete Nth Node From End of List | O(n) | O(1) | `#two-pointer-gap` `#dummy-node-technique` |
+| 9 | Delete the Middle Node of a Linked List | O(n) | O(1) | `#slow-fast-pointers` `#trailing-pointer` |
+| 10 | Sort a Linked List of 0s, 1s, and 2s | O(n) | O(1) | `#dutch-national-flag` `#three-way-partitioning` `#dummy-node-bucketing` |
 
 ---
 
 <div align="center">
 
 ### 🔄 This README updates after every new problem solved
-### Next up: keep grinding singly LL problems — merge two sorted lists, remove Nth node from end, and intersection of two linked lists incoming 🚀
+### Next up: keep grinding singly LL problems — merge two sorted lists, intersection of two linked lists, and add two numbers as linked lists incoming 🚀
 
 </div>
