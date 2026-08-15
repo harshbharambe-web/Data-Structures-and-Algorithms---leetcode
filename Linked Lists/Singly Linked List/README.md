@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=openjdk)
 ![LeetCode](https://img.shields.io/badge/Platform-LeetCode-yellow?style=for-the-badge&logo=leetcode)
-![Problems Solved](https://img.shields.io/badge/Problems%20Solved-10-brightgreen?style=for-the-badge)
+![Problems Solved](https://img.shields.io/badge/Problems%20Solved-11-brightgreen?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Actively%20Updated-blue?style=for-the-badge)
 
 *Every problem here follows the same format: Problem → Approach(es) → Code → Dry Run → Complexity → Pattern Tag.*
@@ -27,6 +27,7 @@
 | 8 | [Delete Nth Node From End of List](#8-delete-nth-node-from-end-of-list) | 🟡 Medium | `#two-pointer-gap` `#dummy-node-technique` | ✅ Solved |
 | 9 | [Delete the Middle Node of a Linked List](#9-delete-the-middle-node-of-a-linked-list) | 🟡 Medium | `#slow-fast-pointers` `#trailing-pointer` | ✅ Solved |
 | 10 | [Sort a Linked List of 0s, 1s, and 2s](#10-sort-a-linked-list-of-0s-1s-and-2s) | 🟡 Medium | `#dutch-national-flag` `#dummy-node-bucketing` | ✅ Solved |
+| 11 | [Add Two Numbers](#11-add-two-numbers) | 🟡 Medium | `#dummy-node-technique` `#carry-simulation` `#simultaneous-traversal` | ✅ Solved |
 
 📊 [Master Complexity & Patterns Summary](#-master-complexity--patterns-summary)
 
@@ -214,7 +215,7 @@ The core idea: if `fast` moves twice as fast as `slow`, then whenever `fast` rea
 
 **Case A — Odd length:** `1 -> 2 -> 3 -> 4 -> 5 -> null`
 
-| Iteration | `fast` before check | Condition (`fast!=null && fast.next!=null`) | `fast` after move | `slow` after move |
+| Iteration | `fast` before | Condition (`fast!=null && fast.next!=null`) | `fast` after move | `slow` after move |
 |---|---|---|---|---|
 | Start | — | — | `1` | `1` |
 | 1 | `1` | `1≠null` ✅ and `1.next(2)≠null` ✅ → enter loop | `3` | `2` |
@@ -225,7 +226,7 @@ The core idea: if `fast` moves twice as fast as `slow`, then whenever `fast` rea
 
 **Case B — Even length:** `1 -> 2 -> 3 -> 4 -> 5 -> 6 -> null`
 
-| Iteration | `fast` before check | Condition | `fast` after move | `slow` after move |
+| Iteration | `fast` before | Condition | `fast` after move | `slow` after move |
 |---|---|---|---|---|
 | Start | — | — | `1` | `1` |
 | 1 | `1` | both non-null ✅ | `3` | `2` |
@@ -1491,6 +1492,166 @@ Setup: `zeroD, oneD, twoD` all point to empty dummies; `zero = zeroD`, `one = on
 > 🎯 **When to recognize this pattern:** Any time a linked list needs to be **grouped or partitioned into a small, fixed number of categories** (2 categories → Problem 6's odd/even; 3 categories → this problem) while preserving relative order within each group and using O(1) space — think: *one dummy + tail pointer per category, route each node to the matching tail in a single pass, then stitch the chains together and explicitly terminate the last one.*
 
 ---
+<a id="11-add-two-numbers"></a>
+## 11. Add Two Numbers
+
+**LeetCode 2 — Medium**
+
+### 📋 Problem Statement
+
+You are given two non-empty linked lists representing two non-negative integers. The digits are stored in **reverse order**, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list, in the same reverse-order digit format.
+
+You may assume the two numbers do not contain any leading zero, except the number `0` itself.
+
+**Example 1:**
+```
+Input: l1 = [2,4,3], l2 = [5,6,4]
+Output: [7,0,8]
+Explanation: 342 + 465 = 807.
+```
+
+**Example 2:**
+```
+Input: l1 = [0], l2 = [0]
+Output: [0]
+```
+
+**Example 3:**
+```
+Input: l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]
+Output: [8,9,9,9,0,0,0,1]
+```
+
+**Constraints:**
+- The number of nodes in each list is in the range `[1, 100]`
+- `0 <= Node.val <= 9`
+- It is guaranteed that the list represents a number that does not have leading zeros
+
+### 🧠 Key Insight
+
+Because the digits are stored **least-significant digit first** (reverse order), this maps directly onto how addition is normally done **by hand on paper** — starting from the rightmost (smallest place-value) digit and moving left, carrying over into the next column whenever a column sum hits double digits. The reverse storage isn't an obstacle here, it's actually what makes a clean single left-to-right traversal possible without ever needing to reverse anything.
+
+The two lists can also be **different lengths**, and there might be a leftover **carry** after both lists are exhausted (e.g., `9999999 + 9999` → carries all the way out to a brand-new leading digit). Both of these mean the loop can't simply stop when one list ends — it needs to keep going as long as *either* list still has digits, *or* there's still a carry to place somewhere.
+
+### 🐌 Brute Force — Convert to Integers, Add, Convert Back
+
+**Approach:** Walk each list and reconstruct the actual integer it represents (remembering the digits are reverse-order, so the **last** node visited holds the most significant digit). Add the two integers using normal arithmetic, then build a new linked list from the digits of the sum, in reverse order.
+
+```java
+class Solution {
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        long num1 = 0, place1 = 1;
+        while (l1 != null) {
+            num1 += l1.val * place1;
+            place1 *= 10;
+            l1 = l1.next;
+        }
+
+        long num2 = 0, place2 = 1;
+        while (l2 != null) {
+            num2 += l2.val * place2;
+            place2 *= 10;
+            l2 = l2.next;
+        }
+
+        long sum = num1 + num2;
+
+        ListNode dummy = new ListNode(0);
+        ListNode curr = dummy;
+        if (sum == 0) {
+            curr.next = new ListNode(0);
+        }
+        while (sum > 0) {
+            curr.next = new ListNode((int) (sum % 10));
+            sum /= 10;
+            curr = curr.next;
+        }
+
+        return dummy.next;
+    }
+}
+```
+
+**Downside:** Relies on the numbers actually **fitting** into a numeric type. With up to 100 digits per list, the represented number can be far larger than even a `long` can hold (`long` maxes out around 19 digits) — so this approach silently **overflows and produces wrong answers** on large inputs unless something like `BigInteger` is used instead, which adds overhead and complexity that the digit-by-digit approach avoids entirely. It also does three full passes (build num1, build num2, build result) instead of one combined pass.
+
+### ✅ Optimal Solution — Simulated Column Addition with Carry
+
+```java
+class Solution {
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        ListNode dummyHead = new ListNode(0);
+        int carry = 0;
+        ListNode curr = dummyHead;
+
+        while (l1 != null || l2 != null || carry != 0) {
+
+            int val1 = (l1 != null) ? l1.val : 0;
+            int val2 = (l2 != null) ? l2.val : 0;
+
+            int sum = val1 + val2 + carry;
+            carry = sum / 10;
+
+            curr.next = new ListNode(sum % 10);
+            curr = curr.next;
+
+            if (l1 != null) {
+                l1 = l1.next;
+            }
+
+            if (l2 != null) {
+                l2 = l2.next;
+            }
+
+        }
+        return dummyHead.next;
+    }
+}
+```
+
+### 🔍 Line-by-Line Explanation
+
+1. **`dummyHead = new ListNode(0); curr = dummyHead;`** — The same **dummy node** anchor trick from Problems 8 and 10: instead of special-casing "what's the very first digit of the result," `curr` just always appends the next digit to `curr.next` and advances, and the real answer is read off `dummyHead.next` at the end.
+2. **`int carry = 0;`** — Tracks anything that overflows past a single digit in the current column, to be added into the *next* column — exactly like carrying a `1` above the next column when adding on paper.
+3. **`while (l1 != null || l2 != null || carry != 0)`** — The loop must keep running as long as **any** of three things is true: `l1` still has digits, `l2` still has digits, or there's a leftover carry to place. This is deliberately `||`, not `&&` — unlike the slow/fast pointer safety guards elsewhere in this repo (which need *both* conditions to be safe before proceeding), here the loop should continue if **any single one** of the three conditions still has unfinished work. Stopping too early (e.g., the moment the shorter list runs out) would silently drop remaining digits from the longer list or drop a final carry-out digit.
+4. **`int val1 = (l1 != null) ? l1.val : 0; int val2 = (l2 != null) ? l2.val : 0;`** — Once a list runs out, treat its "missing" digit as `0` — this is exactly how addition-by-hand works when one number has fewer digits than the other; the shorter number is conceptually padded with leading zeros.
+5. **`int sum = val1 + val2 + carry;`** — Add this column's two digits plus whatever carried in from the previous (less significant) column.
+6. **`carry = sum / 10;`** — Since each digit is `0–9`, `val1 + val2 + carry` can be at most `9 + 9 + 1 = 19`, so `sum / 10` is always either `0` or `1` — capturing whether this column overflowed into the next.
+7. **`curr.next = new ListNode(sum % 10);`** — `sum % 10` keeps only the ones-digit of this column's sum — that's the digit that actually belongs at this position in the result.
+8. **`curr = curr.next;`** — Advance the result pointer to the node just appended, ready to attach the next digit after it.
+9. **`if (l1 != null) l1 = l1.next;` / `if (l2 != null) l2 = l2.next;`** — Advance each input pointer independently, but **only if it's not already null** — once a list is exhausted, trying to call `.next` on `null` would throw a `NullPointerException`, so each advance is individually guarded.
+10. **`return dummyHead.next;`** — Skip past the placeholder dummy node and return the real head of the newly-built result list.
+
+### 🧪 Dry Run
+
+**Case A:** `l1 = 2 -> 4 -> 3 -> null` (represents 342), `l2 = 5 -> 6 -> 4 -> null` (represents 465)
+
+| Iteration | `val1` | `val2` | `carry` in | `sum` | `sum % 10` (digit added) | `carry` out | `l1` after | `l2` after |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `2` | `5` | `0` | `7` | `7` | `0` | `4` | `6` |
+| 2 | `4` | `6` | `0` | `10` | `0` | `1` | `3` | `4` |
+| 3 | `3` | `4` | `1` | `8` | `8` | `0` | `null` | `null` |
+| 4 | loop condition: `l1==null`, `l2==null`, `carry==0` → **all false, loop stops** | | | | | | | |
+
+**Result:** digits appended in order `7, 0, 8` → list `7 -> 0 -> 8 -> null` ✅ — matches expected output `[7,0,8]` (807 = 342 + 465).
+
+**Case B — carry overflows past both lists (`l1 = 9999999`, `l2 = 9999`):** After both lists are fully consumed, the running sum still produces a final `carry = 1` with no digits left in either list. Since the loop condition includes `|| carry != 0`, one **extra iteration** runs with `val1 = 0, val2 = 0, carry = 1`, producing `sum = 1`, appending a final digit `1` and setting `carry` back to `0` — which is exactly the leading `1` that appears at the end of `[8,9,9,9,0,0,0,1]` in Example 3. Without the `carry != 0` clause in the loop condition, this final digit would be silently dropped.
+
+**Case C — trivial `l1 = [0]`, `l2 = [0]`:** `val1 = 0, val2 = 0, carry = 0` → `sum = 0` → appends a single `0` node, then `l1`, `l2`, and `carry` are all null/zero → loop stops after one iteration. Result: `[0]` ✅.
+
+### ⏱️ Time & Space Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute Force (convert to int, add, convert back) | O(m + n) | O(max(m,n)) | Three passes over lengths `m`, `n`; also **unsafe** for large inputs since it can overflow standard numeric types |
+| Optimal (simulated column addition) | O(max(m, n)) | O(max(m, n)) | Single combined pass driven by the longer list (plus possibly one extra step for a final carry); output list length is proportional to input size, and that output is the only extra space used |
+
+### 🏷️ Pattern Tag
+
+`#dummy-node-technique` `#carry-simulation` `#simultaneous-traversal`
+
+> 🎯 **When to recognize this pattern:** Any time a problem represents numbers (or any carry-propagating quantity) as linked lists of digits — especially in **reverse order** — think: *walk both lists together left-to-right, treat a missing digit as 0 once a list runs out, and let the loop condition include "or there's still a carry" so a final overflow digit never gets silently dropped.* Pairs naturally with the **dummy node** anchor (Problems 8 and 10) to avoid special-casing the first digit of the result.
+
+---
 
 ## 📊 Master Complexity & Patterns Summary
 
@@ -1506,12 +1667,13 @@ Setup: `zeroD, oneD, twoD` all point to empty dummies; `zero = zeroD`, `one = on
 | 8 | Delete Nth Node From End of List | O(n) | O(1) | `#two-pointer-gap` `#dummy-node-technique` |
 | 9 | Delete the Middle Node of a Linked List | O(n) | O(1) | `#slow-fast-pointers` `#trailing-pointer` |
 | 10 | Sort a Linked List of 0s, 1s, and 2s | O(n) | O(1) | `#dutch-national-flag` `#three-way-partitioning` `#dummy-node-bucketing` |
+| 11 | Add Two Numbers | O(max(m,n)) | O(max(m,n)) | `#dummy-node-technique` `#carry-simulation` `#simultaneous-traversal` |
 
 ---
 
 <div align="center">
 
 ### 🔄 This README updates after every new problem solved
-### Next up: keep grinding singly LL problems — merge two sorted lists, intersection of two linked lists, and add two numbers as linked lists incoming 🚀
+### Next up: keep grinding singly LL problems — merge two sorted lists, intersection of two linked lists, and remove duplicates from sorted list incoming 🚀
 
 </div>
